@@ -1,0 +1,2 @@
+npm run biome:run
+npm test
