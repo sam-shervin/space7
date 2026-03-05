@@ -101,7 +101,6 @@ const Item = ({
 				padding: 20,
 				marginVertical: 8,
 				marginHorizontal: placement === "adaptive" ? 8 : 4,
-				borderRadius: 12,
 				borderColor: "black",
 				borderWidth: 2,
 				width: placement === "fixed" ? 300 : "auto",
@@ -392,7 +391,7 @@ const Home = () => {
 						</Text>
 					</View>
 				</View>
-				<View style={{ borderColor: "black", borderWidth: 3, borderRadius: 8 }}>
+				<View style={{ borderColor: "black", borderWidth: 2, borderRadius: 16, borderBottomWidth:5, borderRightWidth:5 }}>
 					<FlatList
 						data={DATA}
 						horizontal
@@ -449,8 +448,7 @@ const Home = () => {
 					style={{
 						flex: 1,
 						borderColor: "black",
-						borderWidth: 3,
-						borderRadius: 8,
+						borderWidth: 2, borderRadius: 16, borderBottomWidth:5, borderRightWidth:5,
 						marginBottom: 50,
 					}}
 				>
