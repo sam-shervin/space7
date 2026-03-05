@@ -1,11 +1,13 @@
-import { View } from "react-native";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import Home from "./src/screens/home/Home";
 
 const App = () => {
 	return (
-		<View>
-			<Home />
-		</View>
+		<SafeAreaProvider>
+			<SafeAreaView style={{ flex: 1 }}>
+				<Home />
+			</SafeAreaView>
+		</SafeAreaProvider>
 	);
 };
 
