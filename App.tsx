@@ -1,17 +1,12 @@
-import { StyleSheet, Text, View } from "react-native";
+import { View } from "react-native";
+import Home from "./src/screens/home/Home";
 
-const HelloWorldApp = () => {
-	const styles = StyleSheet.create({
-		container: {
-			flex: 1,
-			justifyContent: "center",
-			alignItems: "center",
-		},
-	});
+const App = () => {
 	return (
-		<View style={styles.container}>
-			<Text>Hello, world!</Text>
+		<View>
+			<Home />
 		</View>
 	);
 };
-export default HelloWorldApp;
+
+export default App;
