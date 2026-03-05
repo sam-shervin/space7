@@ -4,17 +4,23 @@
 	"private": true,
 	"scripts": {
 		"android": "react-native run-android",
+		"android:clean": "cd android && ./gradlew clean && cd .. && react-native run-android",
 		"ios": "react-native run-ios",
 		"dev": "react-native start",
 		"test": "jest",
 		"prepare": "husky",
-		"biome:run": "biome check --write"
+		"biome:run": "biome check --write",
+		"link": "npx react-native-asset"
 	},
 	"dependencies": {
+		"@react-native-vector-icons/evil-icons": "^12.4.1",
+		"@react-native-vector-icons/fontawesome-free-solid": "^0.1.1",
+		"@react-native-vector-icons/lucide": "^12.4.1",
 		"@react-native/new-app-screen": "0.84.1",
 		"react": "19.2.3",
 		"react-native": "0.84.1",
-		"react-native-safe-area-context": "^5.5.2"
+		"react-native-safe-area-context": "^5.5.2",
+		"react-native-vector-icons": "^10.3.0"
 	},
 	"devDependencies": {
 		"@babel/core": "^7.25.2",
