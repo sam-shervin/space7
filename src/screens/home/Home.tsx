@@ -17,15 +17,15 @@ const styles = StyleSheet.create({
 		backgroundColor: "#27A6FD",
 	},
 	logoText: {
-		color: "black",
+		color: "white",
 		fontSize: 36,
-		fontFamily: "Montserrat-ExtraBold",
+		fontFamily: "Montserrat-ExtraBoldItalic",
 		flex: 1,
 	},
 	searchBar: {
 		marginTop: 5,
 		marginBottom: 12,
-		marginHorizontal: 25,
+		marginHorizontal: 10,
 		padding: 1.7,
 		paddingVertical: 2,
 		backgroundColor: "white",
@@ -55,6 +55,7 @@ const styles = StyleSheet.create({
 		borderLeftWidth: 3,
 		position: "relative",
 		bottom: 2,
+		marginRight: 2,
 	},
 	buttonfocused: {
 		borderBottomWidth: 3,
@@ -62,7 +63,7 @@ const styles = StyleSheet.create({
 	},
 	header: {
 		flexDirection: "row",
-		paddingHorizontal: 25,
+		paddingHorizontal: 15,
 	},
 });
 
@@ -92,8 +93,14 @@ const Item = ({
 		"#364FC7", // indigo
 	]);
 	const colorChance = backgroundColors[index % backgroundColors.length];
-	const desc = topicItems.description.slice(0, 128);
-
+	const desc = topicItems.description.slice(
+		0,
+		placement === "adaptive" ? 45 : 55,
+	);
+	const slicedTopic = topicItems.topic.slice(
+		0,
+		placement === "adaptive" ? 20 : 25,
+	);
 	return (
 		<View
 			style={{
@@ -103,24 +110,36 @@ const Item = ({
 				marginHorizontal: placement === "adaptive" ? 8 : 4,
 				borderColor: "black",
 				borderWidth: 2,
+				borderBottomWidth: 5,
+				borderRightWidth: 5,
 				width: placement === "fixed" ? 300 : "auto",
 			}}
 		>
 			<Text
 				style={{
-					fontSize: 24,
+					fontSize: 20,
 					fontFamily: "Montserrat-ExtraBold",
 					paddingBottom: 4,
 				}}
 			>
-				{topicItems.topic}
+				{slicedTopic}
+				{slicedTopic.trimEnd().endsWith(".") || slicedTopic === topicItems.topic
+					? ""
+					: "..."}
 			</Text>
 
 			<Text
-				style={{ fontSize: 14, fontFamily: "Montserrat-Medium", flexGrow: 1 }}
+				style={{
+					fontSize: 16,
+					fontFamily: "Montserrat-Medium",
+					color: "black",
+					flexGrow: 1,
+				}}
 			>
 				{desc}
-				{desc.trimEnd().endsWith(".") ? "" : "..."}
+				{desc.trimEnd().endsWith(".") || desc === topicItems.description
+					? ""
+					: "..."}
 			</Text>
 
 			<View style={{ flexDirection: "row", alignItems: "center" }}>
@@ -265,7 +284,9 @@ const Home = () => {
 			<View style={styles.headerBackground}>
 				{/*Header*/}
 				<View style={styles.header}>
-					<Text style={styles.logoText}>space7</Text>
+					<Text style={styles.logoText}>
+						space<Text style={{ color: "yellow" }}>7</Text>
+					</Text>
 					<FontAwesomeFreeSolid
 						style={{
 							padding: 5,
@@ -344,10 +365,15 @@ const Home = () => {
 				</View>
 			</View>
 			<View
-				style={{ backgroundColor: "#F0F0F0", paddingHorizontal: 23, flex: 1 }}
+				style={{ backgroundColor: "#F0F0F0", paddingHorizontal: 0, flex: 1 }}
 			>
 				<View
-					style={{ flexDirection: "row", paddingVertical: 10, marginTop: 10 }}
+					style={{
+						flexDirection: "row",
+						paddingVertical: 10,
+						marginTop: 10,
+						paddingHorizontal: 15,
+					}}
 				>
 					<View
 						style={{
@@ -394,10 +420,7 @@ const Home = () => {
 				<View
 					style={{
 						borderColor: "black",
-						borderWidth: 2,
-						borderRadius: 16,
-						borderBottomWidth: 5,
-						borderRightWidth: 5,
+						marginLeft: 5,
 					}}
 				>
 					<FlatList
@@ -409,7 +432,13 @@ const Home = () => {
 						keyExtractor={(item) => item.id}
 					/>
 				</View>
-				<View style={{ flexDirection: "row", paddingVertical: 10 }}>
+				<View
+					style={{
+						flexDirection: "row",
+						paddingVertical: 10,
+						paddingHorizontal: 15,
+					}}
+				>
 					<View
 						style={{
 							paddingVertical: 3,
@@ -455,12 +484,6 @@ const Home = () => {
 				<View
 					style={{
 						flex: 1,
-						borderColor: "black",
-						borderWidth: 2,
-						borderRadius: 16,
-						borderBottomWidth: 5,
-						borderRightWidth: 5,
-						marginBottom: 50,
 					}}
 				>
 					<FlatList
