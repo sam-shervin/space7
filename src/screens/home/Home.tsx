@@ -3,6 +3,7 @@ import shuffle from "lodash.shuffle";
 import { useState } from "react";
 import {
 	FlatList,
+	ScrollView,
 	StyleSheet,
 	Text,
 	TextInput,
@@ -34,6 +35,8 @@ const styles = StyleSheet.create({
 		borderRadius: 12,
 		borderWidth: 3,
 		borderColor: "black",
+		borderBottomWidth: 3,
+		borderRightWidth: 3,
 	},
 	inputFocused: {
 		borderRightWidth: 5,
@@ -99,7 +102,7 @@ const Item = ({
 	);
 	const slicedTopic = topicItems.topic.slice(
 		0,
-		placement === "adaptive" ? 20 : 25,
+		placement === "adaptive" ? 35 : 45,
 	);
 	return (
 		<View
@@ -280,7 +283,7 @@ const Home = () => {
 	const [pressed, setPressed] = useState(false);
 
 	return (
-		<View style={{ flex: 1 }}>
+		<ScrollView style={{ flex: 1 }}>
 			<View style={styles.headerBackground}>
 				{/*Header*/}
 				<View style={styles.header}>
@@ -492,10 +495,11 @@ const Home = () => {
 							<Item topicItems={item} index={index} placement="adaptive" />
 						)}
 						keyExtractor={(item) => item.id}
+						scrollEnabled={false}
 					/>
 				</View>
 			</View>
-		</View>
+		</ScrollView>
 	);
 };
 
