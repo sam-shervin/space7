@@ -7,8 +7,10 @@ import {
 	useLinkBuilder,
 } from "@react-navigation/native";
 import { useRef } from "react";
-import { Animated, View } from "react-native";
+import { ActivityIndicator, Animated, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { AuthProvider, useAuth } from "./src/context/AuthContext";
+import AuthScreen from "./src/screens/auth/AuthScreen";
 import Home from "./src/screens/home/Home";
 import MyDiscussions from "./src/screens/my-discussions/MyDiscussions";
 import MyProfile from "./src/screens/my-profile/MyProfile";
@@ -219,7 +221,7 @@ function MyTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 						>
 							{icon}
 						</Animated.View>
-						<Text style={{ fontFamily: "Montserrat-Bold", fontSize: 14 }}>
+						<Text style={{ fontFamily: "Montserrat-Bold", fontSize: 13 }}>
 							{label}
 						</Text>
 					</PlatformPressable>
@@ -231,12 +233,37 @@ function MyTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 
 const Navigation = createStaticNavigation(Tab);
 
+const AppContent = () => {
+	const { isAuthenticated, isLoading } = useAuth();
+
+	return (
+		<SafeAreaView style={{ flex: 1, backgroundColor: "#1A1A1A" }}>
+			{isLoading ? (
+				<View
+					style={{
+						flex: 1,
+						justifyContent: "center",
+						alignItems: "center",
+						backgroundColor: "white",
+					}}
+				>
+					<ActivityIndicator size="large" color="#0000ff" />
+				</View>
+			) : !isAuthenticated ? (
+				<AuthScreen />
+			) : (
+				<Navigation />
+			)}
+		</SafeAreaView>
+	);
+};
+
 const App = () => {
 	return (
 		<SafeAreaProvider>
-			<SafeAreaView style={{ flex: 1 }}>
-				<Navigation />
-			</SafeAreaView>
+			<AuthProvider>
+				<AppContent />
+			</AuthProvider>
 		</SafeAreaProvider>
 	);
 };

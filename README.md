@@ -1,97 +1,284 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# `space7`
 
-# Getting Started
+`space7` is a React Native community-style mobile app focused on topic discovery and discussion. The current project includes a custom home feed, bold card-based UI, animated bottom navigation, and multiple screen folders for features such as discussions, profile, notifications, settings, and spaces.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+This repository is intended to be used primarily for **Android** development.
 
-## Step 1: Start Metro
+## Overview
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+- **Framework**: React Native `0.84.1`
+- **Language**: TypeScript
+- **Navigation**: React Navigation
+- **UI style**: Bright, playful, card-driven mobile interface
+- **Target platform**: Android
+- **Package manager**: `npm`
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+## Current App Areas
 
-```sh
-# Using npm
-npm start
+The project currently contains screen folders for:
 
-# OR using Yarn
-yarn start
+- `Home`
+- `New Topic`
+- `My Discussions`
+- `My Profile`
+- `Notifications`
+- `Settings`
+- `Space`
+
+## Project Structure
+
+```text
+space7/
+├── App.tsx
+├── package.json
+├── android/
+├── ios/
+├── __tests__/
+└── src/
+    ├── assets/
+    ├── components/
+    ├── screens/
+    │   ├── home/
+    │   ├── my-discussions/
+    │   ├── my-profile/
+    │   ├── new-topic/
+    │   ├── notifications/
+    │   ├── settings/
+    │   └── space/
+    └── types.ts
 ```
 
-## Step 2: Build and run your app
+## Requirements
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+Before running the project, make sure the following are installed and configured:
 
-### Android
+- **Node.js** `>= 22.11.0`
+- **npm**
+- **Watchman** on macOS (recommended by React Native)
+- **JDK 17** or the version required by your Android Studio setup
+- **Android Studio**
+- **Android SDK** and platform tools
+- At least one of:
+  - an Android emulator configured in Android Studio
+  - a physical Android device with USB debugging enabled
+
+You should also complete the official React Native Android environment setup:
+
+- [React Native Environment Setup](https://reactnative.dev/docs/set-up-your-environment)
+
+## Setup
+
+### 1. Clone the repository
 
 ```sh
-# Using npm
+git clone <your-repo-url>
+cd space7
+```
+
+### 2. Install dependencies
+
+```sh
+npm install
+```
+
+### 3. Verify Android environment
+
+Make sure an emulator is running, or connect an Android device and confirm it is visible:
+
+```sh
+adb devices
+```
+
+If `adb` is not found, ensure Android platform-tools are installed and added to your shell `PATH`.
+
+## Running the App
+
+### Start Metro
+
+Run Metro from the project root:
+
+```sh
+npm run dev
+```
+
+### Run on Android
+
+In a second terminal, build and launch the Android app:
+
+```sh
 npm run android
-
-# OR using Yarn
-yarn android
 ```
 
-### iOS
+### Clean Android build and rerun
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
-
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
+If Android build artifacts become stale, use:
 
 ```sh
-bundle install
+npm run android:clean
 ```
 
-Then, and every time you update your native dependencies, run:
+## Available Scripts
+
+The following scripts are defined in `package.json`:
+
+- `npm run android` — build and launch the Android app
+- `npm run android:clean` — clean Gradle output and rerun Android
+- `npm run ios` — iOS run command kept by default, but this project is intended for Android use
+- `npm run dev` — start the Metro bundler
+- `npm run test` — run Jest tests
+- `npm run biome:run` — run Biome checks and apply safe formatting fixes
+- `npm run link` — link bundled assets using React Native Asset
+
+## Android-Only Notes
+
+Although the repository still contains an `ios/` directory from the default React Native project template, the intended development target for this project is **Android only**.
+
+That means your normal workflow should be:
 
 ```sh
-bundle exec pod install
+npm install
+npm run dev
+npm run android
 ```
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+You do not need to run CocoaPods or maintain iOS builds unless you intentionally decide to support iOS later.
+
+## Styling and UI Notes
+
+This project uses a highly visual mobile UI with:
+
+- large rounded cards
+- bright accent colors
+- custom tab bar treatment
+- topic and author-focused content blocks
+- animated interactions built with React Native primitives and navigation components
+
+If you continue building on this codebase, keep new screens visually consistent with the existing bold, playful style.
+
+## Main Dependencies
+
+Some of the key dependencies currently in use are:
+
+- `react`
+- `react-native`
+- `@react-navigation/native`
+- `@react-navigation/bottom-tabs`
+- `@react-navigation/native-stack`
+- `@react-navigation/stack`
+- `react-native-safe-area-context`
+- `react-native-screens`
+- `react-native-vector-icons`
+- `@react-native-vector-icons/*`
+- `lodash`
+
+## Development Workflow
+
+Typical daily workflow:
+
+1. Start an emulator or connect an Android device
+2. Install dependencies if needed with `npm install`
+3. Start Metro with `npm run dev`
+4. Run the app with `npm run android`
+5. Edit screens/components inside `src/`
+6. Use Fast Refresh to see UI updates immediately
+
+## Assets
+
+If you add custom fonts or bundled static assets, place them in `src/assets/` and then run:
 
 ```sh
-# Using npm
-npm run ios
-
-# OR using Yarn
-yarn ios
+npm run link
 ```
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+After linking assets, rebuild the Android app if the changes do not appear immediately.
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+## Testing
 
-## Step 3: Modify your app
+Run the test suite with:
 
-Now that you have successfully run the app, let's make changes!
+```sh
+npm run test
+```
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+## Formatting and Code Quality
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+Run Biome checks and formatting with:
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
+```sh
+npm run biome:run
+```
 
-## Congratulations! :tada:
+## Troubleshooting
 
-You've successfully run and modified your React Native App. :partying_face:
+### Metro is already running
 
-### Now what?
+If Metro is stuck or running on the wrong port, stop it and restart:
 
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
+```sh
+npm run dev
+```
 
-# Troubleshooting
+### Android build fails after native dependency or config changes
 
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
+Use the clean build command:
 
-# Learn More
+```sh
+npm run android:clean
+```
 
-To learn more about React Native, take a look at the following resources:
+### Device is not detected
 
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+Check device connectivity:
+
+```sh
+adb devices
+```
+
+If your device does not appear:
+
+- make sure USB debugging is enabled
+- confirm the USB mode supports file transfer/debugging
+- restart `adb`
+
+```sh
+adb kill-server
+adb start-server
+adb devices
+```
+
+### Gradle or SDK issues
+
+Open `android/` in Android Studio and confirm:
+
+- SDK path is valid
+- required Android SDK packages are installed
+- Gradle sync completes successfully
+
+### Cache-related problems
+
+If the app behaves unexpectedly after dependency changes, clear Metro and rebuild:
+
+```sh
+npm run dev -- --reset-cache
+npm run android:clean
+```
+
+## Notes for Contributors
+
+- Keep new code inside `src/` organized by screen or shared component
+- Reuse design patterns already present in `App.tsx` and existing screens
+- Prefer Android verification for UI changes since Android is the target platform
+- Run `npm run biome:run` before finalizing changes
+
+## Next Steps
+
+Good follow-up improvements for this project could include:
+
+- adding reusable theme constants
+- documenting navigation flow screen-by-screen
+- adding screenshot sections for each major screen
+- expanding tests for key UI components
+
+## License
+
+No license information is currently defined in this repository.

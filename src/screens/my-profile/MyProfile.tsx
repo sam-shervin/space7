@@ -1,8 +1,16 @@
 import FontAwesomeFreeSolid from "@react-native-vector-icons/fontawesome-free-solid";
 import Lucide from "@react-native-vector-icons/lucide";
 import shuffle from "lodash.shuffle";
-import { FlatList, Image, ScrollView, Text, View } from "react-native";
-import type { TopicItem } from "../../types";
+import {
+	FlatList,
+	Image,
+	ScrollView,
+	Text,
+	TouchableOpacity,
+	View,
+} from "react-native";
+import { useAuth } from "../../context/AuthContext";
+import type { TopicItem } from "../../types/types";
 
 const Item = ({
 	topicItems,
@@ -213,6 +221,7 @@ const DATA: TopicItem[] = [
 ];
 
 const MyProfile = () => {
+	const { logout } = useAuth();
 	const username: string = "goofygen";
 	const imageUrl =
 		"https://instagram.fmaa6-1.fna.fbcdn.net/v/t51.82787-15/624732511_17861455719591590_9029459131273544920_n.jpg?stp=dst-jpg_s320x320_tt6&efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLmRqYW5nby41NDEuYzIifQ&_nc_ht=instagram.fmaa6-1.fna.fbcdn.net&_nc_cat=1&_nc_oc=Q6cZ2QEGxGfXkVHMlg3mH-uk2_HxocXWW8oW5idEqZ_BRfbMg17HsD3HduuEGtrexMS5FFc&_nc_ohc=v9RZlKdHAbEQ7kNvwE-OsL0&_nc_gid=2T2EV-Rz_bbNCtTFLXncLw&edm=AOQ1c0wBAAAA&ccb=7-5&oh=00_AfxaKzAWpvSw1AqRx54zCBsSseDaFeAGLQqA7yopTEej0A&oe=69B094F4&_nc_sid=8b3546";
@@ -254,6 +263,25 @@ const MyProfile = () => {
 						borderRightWidth: 5,
 					}}
 				/>
+				<TouchableOpacity
+					onPress={logout}
+					style={{
+						borderWidth: 3,
+						borderColor: "black",
+						borderRadius: 8,
+						paddingHorizontal: 12,
+						paddingVertical: 6,
+						alignSelf: "center",
+						backgroundColor: "#FF4FA3",
+						borderBottomWidth: 5,
+						borderRightWidth: 5,
+						marginLeft: 10,
+					}}
+				>
+					<Text style={{ fontFamily: "Montserrat-Bold", color: "black" }}>
+						Logout
+					</Text>
+				</TouchableOpacity>
 			</View>
 			<ScrollView
 				style={{ backgroundColor: "#FDD827", flex: 1 }}
