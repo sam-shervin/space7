@@ -1,6 +1,6 @@
 import { FontAwesomeFreeSolid } from "@react-native-vector-icons/fontawesome-free-solid";
 import shuffle from "lodash.shuffle";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
 	FlatList,
 	ScrollView,
@@ -10,7 +10,8 @@ import {
 	TouchableOpacity,
 	View,
 } from "react-native";
-import type { TopicItem } from "../../types";
+import { getTrendingSpaces, type TrendingSpace } from "../../api/Spaces";
+import type { TopicItem } from "../../types/types";
 
 const styles = StyleSheet.create({
 	headerBackground: {
@@ -163,8 +164,12 @@ const Item = ({
 					</Text>
 				</View>
 			</View>
-
-			<View style={{ flexDirection: "row", alignItems: "center" }}>
+			<ScrollView
+				horizontal
+				nestedScrollEnabled
+				showsHorizontalScrollIndicator={false}
+				contentContainerStyle={{ flexDirection: "row", alignItems: "center" }}
+			>
 				{topicItems.tags.map((tag, tagIndex) => {
 					const tagColor = tagColors[tagIndex % tagColors.length];
 
@@ -191,12 +196,12 @@ const Item = ({
 						</View>
 					);
 				})}
-			</View>
+			</ScrollView>
 		</View>
 	);
 };
 
-const DATA: TopicItem[] = [
+const RECOMMENDED_DATA: TopicItem[] = [
 	{
 		id: "bd7acbea-c1b1-46c2-aed5-3ad53abb28ba",
 		topic: "React Native FlatList Performance",
@@ -278,9 +283,43 @@ const DATA: TopicItem[] = [
 	},
 ];
 
+const mapTrendingSpaceToTopicItem = (space: TrendingSpace): TopicItem => ({
+	id: space.space_id,
+	topic: space.title,
+	description: space.description,
+	author: space.creator.username,
+	count: space.participant_count,
+	tags: space.tags.map((tag) => tag.tag_name),
+});
+
 const Home = () => {
 	const [focused, setFocused] = useState(false);
 	const [pressed, setPressed] = useState(false);
+	const [trendingTopics, setTrendingTopics] = useState<TopicItem[]>([]);
+	const [isTrendingLoading, setIsTrendingLoading] = useState(true);
+	const [trendingError, setTrendingError] = useState<string | null>(null);
+
+	useEffect(() => {
+		const loadTrendingSpaces = async () => {
+			try {
+				setIsTrendingLoading(true);
+				setTrendingError(null);
+
+				const spaces = await getTrendingSpaces();
+				setTrendingTopics(spaces.map(mapTrendingSpaceToTopicItem));
+			} catch (error) {
+				setTrendingError(
+					error instanceof Error
+						? error.message
+						: "Failed to load trending spaces",
+				);
+			} finally {
+				setIsTrendingLoading(false);
+			}
+		};
+
+		loadTrendingSpaces();
+	}, []);
 
 	return (
 		<ScrollView style={{ flex: 1 }}>
@@ -299,6 +338,7 @@ const Home = () => {
 							borderColor: "black",
 							marginHorizontal: 5,
 							paddingHorizontal: 10,
+							alignSelf: "center",
 						}}
 						name="bell"
 						size={25}
@@ -313,6 +353,7 @@ const Home = () => {
 							borderColor: "black",
 							marginLeft: 5,
 							paddingHorizontal: 10,
+							alignSelf: "center",
 						}}
 						name="bars"
 						size={25}
@@ -426,14 +467,50 @@ const Home = () => {
 						marginLeft: 5,
 					}}
 				>
-					<FlatList
-						data={DATA}
-						horizontal
-						renderItem={({ item, index }) => (
-							<Item topicItems={item} index={index} placement="fixed" />
-						)}
-						keyExtractor={(item) => item.id}
-					/>
+					{isTrendingLoading ? (
+						<Text
+							style={{
+								paddingHorizontal: 12,
+								paddingVertical: 16,
+								fontFamily: "Montserrat-Medium",
+								color: "black",
+							}}
+						>
+							Loading trending spaces...
+						</Text>
+					) : trendingError ? (
+						<Text
+							style={{
+								paddingHorizontal: 12,
+								paddingVertical: 16,
+								fontFamily: "Montserrat-Medium",
+								color: "#C2255C",
+							}}
+						>
+							{trendingError}
+						</Text>
+					) : (
+						<FlatList
+							data={trendingTopics}
+							horizontal
+							renderItem={({ item, index }) => (
+								<Item topicItems={item} index={index} placement="fixed" />
+							)}
+							keyExtractor={(item) => item.id}
+							ListEmptyComponent={
+								<Text
+									style={{
+										paddingHorizontal: 12,
+										paddingVertical: 16,
+										fontFamily: "Montserrat-Medium",
+										color: "black",
+									}}
+								>
+									No trending spaces yet.
+								</Text>
+							}
+						/>
+					)}
 				</View>
 				<View
 					style={{
@@ -490,7 +567,7 @@ const Home = () => {
 					}}
 				>
 					<FlatList
-						data={DATA}
+						data={RECOMMENDED_DATA}
 						renderItem={({ item, index }) => (
 							<Item topicItems={item} index={index} placement="adaptive" />
 						)}
