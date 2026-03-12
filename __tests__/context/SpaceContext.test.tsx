@@ -2,7 +2,7 @@
  * Tests for src/context/SpaceContext.ts (TopicContext / useTopic)
  */
 
-import { act, renderHook } from "@testing-library/react-hooks";
+import { act, renderHook } from "@testing-library/react-native";
 import React, { useState } from "react";
 import { TopicContext, useTopic } from "../../src/context/SpaceContext";
 
@@ -19,8 +19,7 @@ const TestProvider = ({ children }: { children: React.ReactNode }) => {
 
 describe("useTopic", () => {
 	it("throws when used outside TopicContext provider", () => {
-		const { result } = renderHook(() => useTopic());
-		expect(result.error?.message).toBe(
+		expect(() => renderHook(() => useTopic())).toThrow(
 			"useTopic must be used inside TopicProvider",
 		);
 	});

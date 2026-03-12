@@ -2,7 +2,7 @@
  * Tests for src/context/AuthContext.ts
  */
 
-import { act, renderHook } from "@testing-library/react-hooks";
+import { act, renderHook } from "@testing-library/react-native";
 import React from "react";
 import {
 	AuthProvider,
@@ -130,8 +130,7 @@ describe("notifyUnauthorizedLogout", () => {
 
 describe("useAuth", () => {
 	it("throws when used outside AuthProvider", () => {
-		const { result } = renderHook(() => useAuth());
-		expect(result.error?.message).toBe(
+		expect(() => renderHook(() => useAuth())).toThrow(
 			"useAuth must be used within AuthProvider",
 		);
 	});
