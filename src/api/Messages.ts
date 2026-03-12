@@ -1,6 +1,6 @@
-import type { SpaceCreator } from "./Spaces";
-import { fetchWithAuth } from "./fetchWithAuth";
 import { API } from "../constants/Network";
+import { fetchWithAuth } from "./fetchWithAuth";
+import type { SpaceCreator } from "./Spaces";
 
 export type MessageLike = {
 	id: number;
@@ -136,12 +136,15 @@ const deleteMessage = async (
 	spaceId: string,
 	messageId: string,
 ): Promise<{ message: string }> => {
-	const res = await fetchWithAuth(`${API}/api/messages/${spaceId}/${messageId}`, {
-		method: "DELETE",
-		headers: {
-			"Content-Type": "application/json",
+	const res = await fetchWithAuth(
+		`${API}/api/messages/${spaceId}/${messageId}`,
+		{
+			method: "DELETE",
+			headers: {
+				"Content-Type": "application/json",
+			},
 		},
-	});
+	);
 
 	const data = await res.json();
 

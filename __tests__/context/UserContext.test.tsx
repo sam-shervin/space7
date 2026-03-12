@@ -2,10 +2,10 @@
  * Tests for src/context/UserContext.ts
  */
 
-import React from "react";
 import { act, renderHook } from "@testing-library/react-hooks";
-import { UserProvider, useUser } from "../../src/context/UserContext";
+import React from "react";
 import { AuthProvider } from "../../src/context/AuthContext";
+import { UserProvider, useUser } from "../../src/context/UserContext";
 
 jest.mock("../../src/utils/authStore", () => ({
 	saveToken: jest.fn(),
@@ -17,8 +17,8 @@ jest.mock("../../src/api/Profile", () => ({
 	getProfile: jest.fn(),
 }));
 
-import { getToken } from "../../src/utils/authStore";
 import { getProfile } from "../../src/api/Profile";
+import { getToken } from "../../src/utils/authStore";
 
 const mockGetToken = getToken as jest.MockedFunction<typeof getToken>;
 const mockGetProfile = getProfile as jest.MockedFunction<typeof getProfile>;

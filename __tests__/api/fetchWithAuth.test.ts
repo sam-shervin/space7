@@ -12,8 +12,8 @@ jest.mock("../../src/context/AuthContext", () => ({
 	notifyUnauthorizedLogout: jest.fn(),
 }));
 
-import { getToken } from "../../src/utils/authStore";
 import { notifyUnauthorizedLogout } from "../../src/context/AuthContext";
+import { getToken } from "../../src/utils/authStore";
 
 const mockGetToken = getToken as jest.MockedFunction<typeof getToken>;
 const mockNotifyUnauthorizedLogout =
@@ -112,9 +112,9 @@ describe("fetchWithAuth", () => {
 		mockNotifyUnauthorizedLogout.mockResolvedValueOnce(undefined);
 		mockFetch.mockResolvedValueOnce(makeResponse(401));
 
-		await expect(
-			fetchWithAuth("https://api.example.com/data"),
-		).rejects.toThrow("Unauthorized");
+		await expect(fetchWithAuth("https://api.example.com/data")).rejects.toThrow(
+			"Unauthorized",
+		);
 
 		expect(mockNotifyUnauthorizedLogout).toHaveBeenCalledTimes(1);
 	});

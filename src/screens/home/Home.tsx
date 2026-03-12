@@ -135,7 +135,8 @@ const Item = ({
 					}}
 				>
 					{slicedTopic}
-					{slicedTopic.trimEnd().endsWith(".") || slicedTopic === topicItems.topic
+					{slicedTopic.trimEnd().endsWith(".") ||
+					slicedTopic === topicItems.topic
 						? ""
 						: "..."}
 				</Text>

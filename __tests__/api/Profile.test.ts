@@ -9,6 +9,7 @@ jest.mock("../../src/api/fetchWithAuth", () => ({
 }));
 
 import { fetchWithAuth } from "../../src/api/fetchWithAuth";
+
 const mockFetchWithAuth = fetchWithAuth as jest.MockedFunction<
 	typeof fetchWithAuth
 >;

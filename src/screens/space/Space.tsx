@@ -1,8 +1,8 @@
 import FontAwesomeFreeSolid from "@react-native-vector-icons/fontawesome-free-solid";
 import { useEffect, useLayoutEffect, useState } from "react";
 import {
-	Modal,
 	Image,
+	Modal,
 	ScrollView,
 	Text,
 	TextInput,
@@ -12,16 +12,14 @@ import {
 import {
 	deleteMessage,
 	getMessages,
+	type Message,
 	sendMessage,
 	toggleMessageAppreciation,
-	type Message,
 } from "../../api/Messages";
 import type { Space as SpaceType } from "../../api/Spaces";
 import { getSpaceById, joinSpace } from "../../api/Spaces";
 import { useTopic } from "../../context/SpaceContext";
 import { useUser } from "../../context/UserContext";
-
-
 
 const colors = [
 	"#FFD60A", // vivid yellow
@@ -260,7 +258,7 @@ export const Space = ({ topicId }: { topicId: string }) => {
 					<View
 						style={{
 							position: "absolute",
-							right:10,
+							right: 10,
 							marginTop: 80,
 							marginLeft: 20,
 							backgroundColor: "white",
@@ -277,8 +275,7 @@ export const Space = ({ topicId }: { topicId: string }) => {
 								setShowSortModal(false);
 							}}
 							style={{
-								backgroundColor:
-									sort === "recent" ? "#FFD60A" : "#F1F3F5",
+								backgroundColor: sort === "recent" ? "#FFD60A" : "#F1F3F5",
 								paddingHorizontal: 12,
 								paddingVertical: 8,
 								borderRadius: 12,
@@ -371,10 +368,7 @@ export const Space = ({ topicId }: { topicId: string }) => {
 					onPress={() => setShowSortModal(true)}
 				/>
 			</View>
-			<ScrollView
-				contentContainerStyle={{ flexGrow: 1 }}
-				style={{ flex: 1 }}
-			>
+			<ScrollView contentContainerStyle={{ flexGrow: 1 }} style={{ flex: 1 }}>
 				<View style={{ padding: 10 }}>
 					{isLoading ? (
 						<Text
@@ -448,7 +442,7 @@ export const Space = ({ topicId }: { topicId: string }) => {
 						</View>
 					)}
 				</View>
-				<View 
+				<View
 					style={{
 						flexDirection: "row",
 						flexWrap: "wrap",
@@ -568,7 +562,10 @@ export const Space = ({ topicId }: { topicId: string }) => {
 											}}
 										>
 											<Text
-												style={{ fontFamily: "Montserrat-Bold", color: "black" }}
+												style={{
+													fontFamily: "Montserrat-Bold",
+													color: "black",
+												}}
 											>
 												👍 {message.appreciation_count}
 											</Text>
@@ -587,7 +584,10 @@ export const Space = ({ topicId }: { topicId: string }) => {
 												}}
 											>
 												<Text
-													style={{ fontFamily: "Montserrat-Bold", color: "black" }}
+													style={{
+														fontFamily: "Montserrat-Bold",
+														color: "black",
+													}}
 												>
 													Delete
 												</Text>
@@ -609,7 +609,6 @@ export const Space = ({ topicId }: { topicId: string }) => {
 								{messageError}
 							</Text>
 						) : null}
-
 					</View>
 				</View>
 			</ScrollView>
@@ -621,7 +620,8 @@ export const Space = ({ topicId }: { topicId: string }) => {
 					paddingTop: 10,
 					paddingBottom: 14,
 					backgroundColor: colors[0],
-					borderLeftWidth: 2, borderRightWidth: 2,
+					borderLeftWidth: 2,
+					borderRightWidth: 2,
 				}}
 			>
 				<TextInput

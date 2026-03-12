@@ -3,11 +3,11 @@
  */
 
 import {
+	forgotPassword,
+	login,
+	resetPassword,
 	signup,
 	verifyOTP,
-	login,
-	forgotPassword,
-	resetPassword,
 } from "../../src/api/Auth";
 
 const mockFetch = jest.fn();
@@ -95,17 +95,17 @@ describe("verifyOTP", () => {
 			makeErrorResponse({ error: "OTP verification failed" }, 400),
 		);
 
-		await expect(
-			verifyOTP("000000", "alice@example.com"),
-		).rejects.toThrow("OTP verification failed");
+		await expect(verifyOTP("000000", "alice@example.com")).rejects.toThrow(
+			"OTP verification failed",
+		);
 	});
 
 	it("throws with default message when server error has no message", async () => {
 		mockFetch.mockResolvedValueOnce(makeErrorResponse({}, 500));
 
-		await expect(
-			verifyOTP("000000", "alice@example.com"),
-		).rejects.toThrow("OTP verification failed");
+		await expect(verifyOTP("000000", "alice@example.com")).rejects.toThrow(
+			"OTP verification failed",
+		);
 	});
 });
 

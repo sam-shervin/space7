@@ -2,12 +2,12 @@
  * Tests for src/context/AuthContext.ts
  */
 
-import React from "react";
 import { act, renderHook } from "@testing-library/react-hooks";
+import React from "react";
 import {
 	AuthProvider,
-	useAuth,
 	notifyUnauthorizedLogout,
+	useAuth,
 } from "../../src/context/AuthContext";
 
 jest.mock("../../src/utils/authStore", () => ({
@@ -16,7 +16,7 @@ jest.mock("../../src/utils/authStore", () => ({
 	clearToken: jest.fn(),
 }));
 
-import { saveToken, getToken, clearToken } from "../../src/utils/authStore";
+import { clearToken, getToken, saveToken } from "../../src/utils/authStore";
 
 const mockSaveToken = saveToken as jest.MockedFunction<typeof saveToken>;
 const mockGetToken = getToken as jest.MockedFunction<typeof getToken>;
