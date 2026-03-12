@@ -1,11 +1,15 @@
 import { FontAwesomeFreeSolid } from "@react-native-vector-icons/fontawesome-free-solid";
+import { useNavigation } from "@react-navigation/native";
+import { useMemo, useState } from "react";
 import {
+	ScrollView,
 	StyleSheet,
 	Text,
 	TextInput,
 	TouchableOpacity,
 	View,
 } from "react-native";
+import { createSpace, type Space } from "../../api/Spaces";
 
 const styles = StyleSheet.create({
 	headerBackground: {
@@ -26,9 +30,63 @@ const styles = StyleSheet.create({
 	},
 });
 
+type AppNavigation = {
+	navigate: (screen: "MyDiscussions") => void;
+};
+
 const NewTopic = () => {
+	const navigation = useNavigation<AppNavigation>();
+	const [title, setTitle] = useState("");
+	const [description, setDescription] = useState("");
+	const [hashtagsInput, setHashtagsInput] = useState("");
+	const [visibility, setVisibility] = useState<Space["visibility"]>("public");
+	const [loading, setLoading] = useState(false);
+	const [error, setError] = useState("");
+
+	const hashtags = useMemo(() => {
+		return hashtagsInput
+			.split(",")
+			.map((tag) => tag.replace(/#/g, "").trim())
+			.filter(Boolean);
+	}, [hashtagsInput]);
+
+	const handleCreate = async () => {
+		if (!title.trim() || !description.trim()) {
+			setError("Title and description are required");
+			return;
+		}
+
+		try {
+			setLoading(true);
+			setError("");
+
+			await createSpace({
+				title: title.trim(),
+				description: description.trim(),
+				visibility,
+				hashtags,
+			});
+
+			setTitle("");
+			setDescription("");
+			setHashtagsInput("");
+			navigation.navigate("MyDiscussions");
+		} catch (createError) {
+			setError(
+				createError instanceof Error
+					? createError.message
+					: "Failed to create space",
+			);
+		} finally {
+			setLoading(false);
+		}
+	};
+
 	return (
-		<View style={{ flex: 1 }}>
+		<ScrollView
+			style={{ flex: 1 }}
+			contentContainerStyle={{ paddingBottom: 30 }}
+		>
 			<View style={styles.headerBackground}>
 				{/*Header*/}
 				<View style={styles.header}>
@@ -96,6 +154,8 @@ const NewTopic = () => {
 				}}
 			>
 				<TextInput
+					value={title}
+					onChangeText={setTitle}
 					style={{
 						fontFamily: "Montserrat-Medium",
 						fontSize: 15,
@@ -144,6 +204,8 @@ const NewTopic = () => {
 					multiline
 					editable
 					numberOfLines={4}
+					value={description}
+					onChangeText={setDescription}
 					style={{
 						fontFamily: "Montserrat-Medium",
 						fontSize: 15,
@@ -209,17 +271,47 @@ const NewTopic = () => {
 					}}
 				>
 					<TextInput
+						value={hashtagsInput}
+						onChangeText={setHashtagsInput}
 						style={{
 							fontFamily: "Montserrat-Medium",
-							fontSize: 20,
+							fontSize: 14,
 							flex: 1,
 							color: "black",
 							marginHorizontal: 5,
 						}}
-						placeholder="# Add hashtags. . ."
+						placeholder="# Add hashtags separated by commas"
 						placeholderTextColor="#7f7d7dff"
+						multiline
+						textAlignVertical="top"
 					/>
 				</View>
+				{hashtags.length > 0 && (
+					<ScrollView
+						horizontal
+						showsHorizontalScrollIndicator={false}
+						contentContainerStyle={{ paddingHorizontal: 10, paddingBottom: 12 }}
+					>
+						{hashtags.map((tag) => (
+							<View
+								key={tag}
+								style={{
+									backgroundColor: "#00CFE8",
+									paddingHorizontal: 8,
+									paddingVertical: 4,
+									borderRadius: 12,
+									borderWidth: 2,
+									borderColor: "black",
+									marginRight: 8,
+								}}
+							>
+								<Text style={{ fontFamily: "Montserrat-Bold", color: "black" }}>
+									#{tag}
+								</Text>
+							</View>
+						))}
+					</ScrollView>
+				)}
 			</View>
 			<View
 				style={{
@@ -231,6 +323,7 @@ const NewTopic = () => {
 				<TouchableOpacity
 					style={{ flex: 1, alignItems: "center" }}
 					activeOpacity={1}
+					onPress={() => setVisibility("public")}
 				>
 					<View
 						style={{
@@ -242,9 +335,10 @@ const NewTopic = () => {
 							alignItems: "center",
 							width: "90%",
 							justifyContent: "center",
-							backgroundColor: "#00e85dff",
-							borderBottomWidth: 5,
-							borderRightWidth: 5,
+							backgroundColor:
+								visibility === "public" ? "#00e85dff" : "#e0f9e8ff",
+							borderBottomWidth: visibility === "public" ? 5 : 3,
+							borderRightWidth: visibility === "public" ? 5 : 3,
 						}}
 					>
 						<FontAwesomeFreeSolid name={"globe"} size={23} color="#000000" />
@@ -262,6 +356,7 @@ const NewTopic = () => {
 				<TouchableOpacity
 					style={{ flex: 1, alignItems: "center" }}
 					activeOpacity={1}
+					onPress={() => setVisibility("private")}
 				>
 					<View
 						style={{
@@ -273,9 +368,10 @@ const NewTopic = () => {
 							alignItems: "center",
 							width: "90%",
 							justifyContent: "center",
-							backgroundColor: "#FF4FA3",
-							borderBottomWidth: 5,
-							borderRightWidth: 5,
+							backgroundColor:
+								visibility === "private" ? "#FF4FA3" : "#fcf3f7ff",
+							borderBottomWidth: visibility === "private" ? 5 : 3,
+							borderRightWidth: visibility === "private" ? 5 : 3,
 						}}
 					>
 						<FontAwesomeFreeSolid name={"lock"} size={23} color="#000000" />
@@ -291,6 +387,19 @@ const NewTopic = () => {
 					</View>
 				</TouchableOpacity>
 			</View>
+			{error ? (
+				<Text
+					style={{
+						color: "#C2255C",
+						fontFamily: "Montserrat-Bold",
+						textAlign: "center",
+						marginTop: 12,
+						marginHorizontal: 20,
+					}}
+				>
+					{error}
+				</Text>
+			) : null}
 			<View
 				style={{
 					flexDirection: "row",
@@ -302,6 +411,8 @@ const NewTopic = () => {
 				<TouchableOpacity
 					style={{ flex: 1, alignItems: "center" }}
 					activeOpacity={1}
+					onPress={handleCreate}
+					disabled={loading}
 				>
 					<View
 						style={{
@@ -313,7 +424,7 @@ const NewTopic = () => {
 							alignItems: "center",
 							width: "90%",
 							justifyContent: "center",
-							backgroundColor: "#FFD60A",
+							backgroundColor: loading ? "#F5E7A1" : "#FFD60A",
 							borderBottomWidth: 5,
 							borderRightWidth: 5,
 						}}
@@ -325,12 +436,12 @@ const NewTopic = () => {
 								marginLeft: 5,
 							}}
 						>
-							Create
+							{loading ? "Creating..." : "Create"}
 						</Text>
 					</View>
 				</TouchableOpacity>
 			</View>
-		</View>
+		</ScrollView>
 	);
 };
 

@@ -22,7 +22,7 @@ export const LoginScreen = ({
 	const handleLogin = async () => {
 		try {
 			setLoginFailed(false);
-			const response = await login(email, password);
+			const response = await login(email.toLowerCase(), password);
 			await signIn(response.token);
 		} catch (error) {
 			setLoginFailed(true);

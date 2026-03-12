@@ -10,7 +10,12 @@ import {
 	TouchableOpacity,
 	View,
 } from "react-native";
-import { getTrendingSpaces, type TrendingSpace } from "../../api/Spaces";
+import {
+	getRecommendedSpaces,
+	getTrendingSpaces,
+	type Space,
+} from "../../api/Spaces";
+import { useTopic } from "../../context/SpaceContext";
 import type { TopicItem } from "../../types/types";
 
 const styles = StyleSheet.create({
@@ -75,10 +80,12 @@ const Item = ({
 	topicItems,
 	index,
 	placement,
+	onPress,
 }: {
 	topicItems: TopicItem;
 	index: number;
 	placement: "adaptive" | "fixed";
+	onPress: () => void;
 }) => {
 	const backgroundColors = [
 		"#FFD60A", // vivid yellow
@@ -119,52 +126,55 @@ const Item = ({
 				width: placement === "fixed" ? 300 : "auto",
 			}}
 		>
-			<Text
-				style={{
-					fontSize: 20,
-					fontFamily: "Montserrat-ExtraBold",
-					paddingBottom: 4,
-				}}
-			>
-				{slicedTopic}
-				{slicedTopic.trimEnd().endsWith(".") || slicedTopic === topicItems.topic
-					? ""
-					: "..."}
-			</Text>
-
-			<Text
-				style={{
-					fontSize: 16,
-					fontFamily: "Montserrat-Medium",
-					color: "black",
-					flexGrow: 1,
-				}}
-			>
-				{desc}
-				{desc.trimEnd().endsWith(".") || desc === topicItems.description
-					? ""
-					: "..."}
-			</Text>
-
-			<View style={{ flexDirection: "row", alignItems: "center" }}>
-				<View
+			<TouchableOpacity activeOpacity={1} onPress={onPress}>
+				<Text
 					style={{
-						marginRight: "auto",
-						flexDirection: "row",
-						paddingVertical: 4,
+						fontSize: 20,
+						fontFamily: "Montserrat-ExtraBold",
+						paddingBottom: 4,
 					}}
 				>
-					<Text>By @{topicItems.author}</Text>
-				</View>
+					{slicedTopic}
+					{slicedTopic.trimEnd().endsWith(".") || slicedTopic === topicItems.topic
+						? ""
+						: "..."}
+				</Text>
+
+				<Text
+					style={{
+						fontSize: 16,
+						fontFamily: "Montserrat-Medium",
+						color: "black",
+						flexGrow: 1,
+					}}
+				>
+					{desc}
+					{desc.trimEnd().endsWith(".") || desc === topicItems.description
+						? ""
+						: "..."}
+				</Text>
 
 				<View style={{ flexDirection: "row", alignItems: "center" }}>
-					<FontAwesomeFreeSolid name="user" size={15} color="#000000" />
-					<Text style={{ marginLeft: 4, fontFamily: "Montserrat-Bold" }}>
-						{topicItems.count}
-					</Text>
+					<View
+						style={{
+							marginRight: "auto",
+							flexDirection: "row",
+							paddingVertical: 4,
+						}}
+					>
+						<Text>By @{topicItems.author}</Text>
+					</View>
+
+					<View style={{ flexDirection: "row", alignItems: "center" }}>
+						<FontAwesomeFreeSolid name="user" size={15} color="#000000" />
+						<Text style={{ marginLeft: 4, fontFamily: "Montserrat-Bold" }}>
+							{topicItems.count}
+						</Text>
+					</View>
 				</View>
-			</View>
+			</TouchableOpacity>
 			<ScrollView
+				showsVerticalScrollIndicator={false}
 				horizontal
 				nestedScrollEnabled
 				showsHorizontalScrollIndicator={false}
@@ -201,89 +211,7 @@ const Item = ({
 	);
 };
 
-const RECOMMENDED_DATA: TopicItem[] = [
-	{
-		id: "bd7acbea-c1b1-46c2-aed5-3ad53abb28ba",
-		topic: "React Native FlatList Performance",
-		description:
-			"Optimizing large lists in React Native by improving rendering efficiency, reducing unnecessary re-renders, and applying techniques that ensure smooth and responsive scrolling even with large datasets.",
-		author: "Alex Johnson",
-		count: 128,
-		tags: ["react-native", "performance", "flatlist"],
-	},
-	{
-		id: "3ac68afc-c605-48d3-a4f8-fbd91aa97f63",
-		topic: "Understanding JavaScript Closures",
-		description:
-			"Explanation of closures with practical examples and common interview questions.",
-		author: "Priya Sharma",
-		count: 76,
-		tags: ["javascript", "functions", "closures"],
-	},
-	{
-		id: "58694a0f-3da1-471f-bd96-145571e29d72",
-		topic: "Introduction to Docker",
-		description:
-			"Basic concepts of containers, Docker images, and container orchestration.",
-		author: "Daniel Lee",
-		count: 54,
-		tags: ["docker", "containers", "devops"],
-	},
-	{
-		id: "bd7acbea-c1b1-46c2-aed5-3bjad53abb28ba",
-		topic: "Neural Networks Basics",
-		description:
-			"Understanding perceptrons, activation functions, and forward propagation.",
-		author: "Sara Kim",
-		count: 92,
-		tags: ["machine-learning", "neural-networks", "ai"],
-	},
-	{
-		id: "3ac68afc-c605-48d3-a4f8-nljfbd91aa97f63",
-		topic: "REST vs GraphQL",
-		description:
-			"Comparison between REST APIs and GraphQL for modern web development.",
-		author: "Michael Brown",
-		count: 61,
-		tags: ["api", "graphql", "rest"],
-	},
-	{
-		id: "58694a0f-3da1-471f-bd96-nlj145571e29d72",
-		topic: "Building Authentication Systems",
-		description:
-			"Implementing login, JWT authentication, and secure session handling.",
-		author: "Ananya Iyer",
-		count: 147,
-		tags: ["authentication", "security", "backend"],
-	},
-	{
-		id: "bd7acbea-c1b1-46c2-aed5-3bbijhjad53abb28ba",
-		topic: "CSS Flexbox Layout Guide",
-		description: "Practical guide to mastering flexbox for responsive layouts.",
-		author: "David Miller",
-		count: 83,
-		tags: ["css", "flexbox", "frontend"],
-	},
-	{
-		id: "3ac68afc-c605-48d3-a4f8-fbdnj91aa97f63",
-		topic: "LangChain for LLM Applications",
-		description:
-			"Using LangChain to build AI powered applications and workflows.",
-		author: "Rohit Mehta",
-		count: 39,
-		tags: ["llm", "langchain", "ai"],
-	},
-	{
-		id: "58694a0f-3da1-471f-bd96-14nj5571e29d72",
-		topic: "Understanding Git Internals",
-		description: "How Git stores commits, trees, and objects internally.",
-		author: "Emily Carter",
-		count: 58,
-		tags: ["git", "version-control", "development"],
-	},
-];
-
-const mapTrendingSpaceToTopicItem = (space: TrendingSpace): TopicItem => ({
+const mapSpaceToTopicItem = (space: Space): TopicItem => ({
 	id: space.space_id,
 	topic: space.title,
 	description: space.description,
@@ -296,33 +224,53 @@ const Home = () => {
 	const [focused, setFocused] = useState(false);
 	const [pressed, setPressed] = useState(false);
 	const [trendingTopics, setTrendingTopics] = useState<TopicItem[]>([]);
+	const [recommendedTopics, setRecommendedTopics] = useState<TopicItem[]>([]);
 	const [isTrendingLoading, setIsTrendingLoading] = useState(true);
+	const [isRecommendedLoading, setIsRecommendedLoading] = useState(true);
 	const [trendingError, setTrendingError] = useState<string | null>(null);
+	const [recommendedError, setRecommendedError] = useState<string | null>(null);
+
+	const { setTopicId } = useTopic();
 
 	useEffect(() => {
-		const loadTrendingSpaces = async () => {
+		const loadSpaces = async () => {
 			try {
 				setIsTrendingLoading(true);
 				setTrendingError(null);
+				setIsRecommendedLoading(true);
+				setRecommendedError(null);
 
-				const spaces = await getTrendingSpaces();
-				setTrendingTopics(spaces.map(mapTrendingSpaceToTopicItem));
+				const trendingSpaces = await getTrendingSpaces();
+				setTrendingTopics(trendingSpaces.map(mapSpaceToTopicItem));
+
+				const recommendedSpaces = await getRecommendedSpaces();
+				setRecommendedTopics(recommendedSpaces.map(mapSpaceToTopicItem));
 			} catch (error) {
 				setTrendingError(
 					error instanceof Error
 						? error.message
 						: "Failed to load trending spaces",
 				);
+				setRecommendedError(
+					error instanceof Error
+						? error.message
+						: "Failed to load recommended spaces",
+				);
 			} finally {
 				setIsTrendingLoading(false);
+				setIsRecommendedLoading(false);
 			}
 		};
 
-		loadTrendingSpaces();
+		loadSpaces();
 	}, []);
 
 	return (
-		<ScrollView style={{ flex: 1 }}>
+		<ScrollView
+			showsVerticalScrollIndicator={false}
+			showsHorizontalScrollIndicator={false}
+			style={{ flex: 1 }}
+		>
 			<View style={styles.headerBackground}>
 				{/*Header*/}
 				<View style={styles.header}>
@@ -440,26 +388,6 @@ const Home = () => {
 							Trending Topics
 						</Text>
 					</View>
-					<View
-						style={{
-							paddingVertical: 3,
-							paddingHorizontal: 8,
-							backgroundColor: "#55D569",
-							borderColor: "black",
-							borderWidth: 3,
-							borderRadius: 8,
-						}}
-					>
-						<Text
-							style={{
-								fontFamily: "Montserrat-Bold",
-								fontSize: 18,
-								color: "black",
-							}}
-						>
-							See All
-						</Text>
-					</View>
 				</View>
 				<View
 					style={{
@@ -493,8 +421,15 @@ const Home = () => {
 						<FlatList
 							data={trendingTopics}
 							horizontal
+							showsHorizontalScrollIndicator={false}
+							showsVerticalScrollIndicator={false}
 							renderItem={({ item, index }) => (
-								<Item topicItems={item} index={index} placement="fixed" />
+								<Item
+									topicItems={item}
+									index={index}
+									onPress={() => setTopicId(item.id)}
+									placement="fixed"
+								/>
 							)}
 							keyExtractor={(item) => item.id}
 							ListEmptyComponent={
@@ -540,39 +475,63 @@ const Home = () => {
 							Recommended for you
 						</Text>
 					</View>
-					<View
-						style={{
-							paddingVertical: 3,
-							paddingHorizontal: 8,
-							backgroundColor: "#26A9FE",
-							borderColor: "black",
-							borderWidth: 3,
-							borderRadius: 8,
-						}}
-					>
-						<Text
-							style={{
-								fontFamily: "Montserrat-Bold",
-								fontSize: 18,
-								color: "black",
-							}}
-						>
-							See All
-						</Text>
-					</View>
 				</View>
 				<View
 					style={{
 						flex: 1,
 					}}
 				>
+					{isRecommendedLoading && (
+						<Text
+							style={{
+								paddingHorizontal: 12,
+								paddingVertical: 16,
+								fontFamily: "Montserrat-Medium",
+								color: "black",
+							}}
+						>
+							Loading recommended spaces...
+						</Text>
+					)}
+					{recommendedError && (
+						<Text
+							style={{
+								paddingHorizontal: 12,
+								paddingVertical: 16,
+								fontFamily: "Montserrat-Medium",
+								color: "#C2255C",
+							}}
+						>
+							{recommendedError}
+						</Text>
+					)}
 					<FlatList
-						data={RECOMMENDED_DATA}
+						style={{ marginBottom: 80 }}
+						showsHorizontalScrollIndicator={false}
+						showsVerticalScrollIndicator={false}
+						data={recommendedTopics}
 						renderItem={({ item, index }) => (
-							<Item topicItems={item} index={index} placement="adaptive" />
+							<Item
+								topicItems={item}
+								index={index}
+								onPress={() => setTopicId(item.id)}
+								placement="adaptive"
+							/>
 						)}
 						keyExtractor={(item) => item.id}
 						scrollEnabled={false}
+						ListEmptyComponent={
+							<Text
+								style={{
+									paddingHorizontal: 12,
+									paddingVertical: 16,
+									fontFamily: "Montserrat-Medium",
+									color: "black",
+								}}
+							>
+								No recommendations yet.
+							</Text>
+						}
 					/>
 				</View>
 			</View>

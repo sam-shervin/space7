@@ -6,15 +6,18 @@ import {
 	createStaticNavigation,
 	useLinkBuilder,
 } from "@react-navigation/native";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { ActivityIndicator, Animated, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { AuthProvider, useAuth } from "./src/context/AuthContext";
+import { TopicContext } from "./src/context/SpaceContext";
+import { UserProvider, useUser } from "./src/context/UserContext";
 import AuthScreen from "./src/screens/auth/AuthScreen";
 import Home from "./src/screens/home/Home";
 import MyDiscussions from "./src/screens/my-discussions/MyDiscussions";
 import MyProfile from "./src/screens/my-profile/MyProfile";
 import NewTopic from "./src/screens/new-topic/NewTopic";
+import { Space } from "./src/screens/space/Space";
 
 const Tab = createBottomTabNavigator({
 	tabBar: (props) => <MyTabBar {...props} />,
@@ -235,10 +238,13 @@ const Navigation = createStaticNavigation(Tab);
 
 const AppContent = () => {
 	const { isAuthenticated, isLoading } = useAuth();
+	const { isLoading: isUserLoading } = useUser();
+
+	const [topicId, setTopicId] = useState<null | string>(null);
 
 	return (
 		<SafeAreaView style={{ flex: 1, backgroundColor: "#1A1A1A" }}>
-			{isLoading ? (
+			{isLoading || (isAuthenticated && isUserLoading) ? (
 				<View
 					style={{
 						flex: 1,
@@ -247,12 +253,14 @@ const AppContent = () => {
 						backgroundColor: "white",
 					}}
 				>
-					<ActivityIndicator size="large" color="#0000ff" />
+					<ActivityIndicator size="large" color="#0091ffff" />
 				</View>
 			) : !isAuthenticated ? (
 				<AuthScreen />
 			) : (
-				<Navigation />
+				<TopicContext.Provider value={{ topicId, setTopicId }}>
+					{topicId ? <Space topicId={topicId} /> : <Navigation />}
+				</TopicContext.Provider>
 			)}
 		</SafeAreaView>
 	);
@@ -262,7 +270,9 @@ const App = () => {
 	return (
 		<SafeAreaProvider>
 			<AuthProvider>
-				<AppContent />
+				<UserProvider>
+					<AppContent />
+				</UserProvider>
 			</AuthProvider>
 		</SafeAreaProvider>
 	);

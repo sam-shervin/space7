@@ -10,16 +10,24 @@ import {
 	View,
 } from "react-native";
 import { useAuth } from "../../context/AuthContext";
+import { useUser } from "../../context/UserContext";
 import type { TopicItem } from "../../types/types";
+import { getMySpaces } from "../../api/Spaces";
+import type { Space } from "../../api/Spaces";
+import { useEffect, useState } from "react";
+import { useTopic } from "../../context/SpaceContext";
+
 
 const Item = ({
 	topicItems,
 	index,
 	placement,
+	onPress,
 }: {
 	topicItems: TopicItem;
 	index: number;
 	placement: "adaptive" | "fixed";
+	onPress: () => void;
 }) => {
 	const backgroundColors = [
 		"#FFD60A", // vivid yellow
@@ -60,53 +68,60 @@ const Item = ({
 				width: placement === "fixed" ? 300 : "auto",
 			}}
 		>
-			<Text
-				style={{
-					fontSize: 20,
-					fontFamily: "Montserrat-ExtraBold",
-					paddingBottom: 4,
-				}}
-			>
-				{slicedTopic}
-				{slicedTopic.trimEnd().endsWith(".") || slicedTopic === topicItems.topic
-					? ""
-					: "..."}
-			</Text>
-
-			<Text
-				style={{
-					fontSize: 16,
-					fontFamily: "Montserrat-Medium",
-					color: "black",
-					flexGrow: 1,
-				}}
-			>
-				{desc}
-				{desc.trimEnd().endsWith(".") || desc === topicItems.description
-					? ""
-					: "..."}
-			</Text>
-
-			<View style={{ flexDirection: "row", alignItems: "center" }}>
-				<View
+			<TouchableOpacity activeOpacity={1} onPress={onPress}>
+				<Text
 					style={{
-						marginRight: "auto",
-						flexDirection: "row",
-						paddingVertical: 4,
+						fontSize: 20,
+						fontFamily: "Montserrat-ExtraBold",
+						paddingBottom: 4,
 					}}
 				>
-					<Text>By @{topicItems.author}</Text>
-				</View>
+					{slicedTopic}
+					{slicedTopic.trimEnd().endsWith(".") || slicedTopic === topicItems.topic
+						? ""
+						: "..."}
+				</Text>
+
+				<Text
+					style={{
+						fontSize: 16,
+						fontFamily: "Montserrat-Medium",
+						color: "black",
+						flexGrow: 1,
+					}}
+				>
+					{desc}
+					{desc.trimEnd().endsWith(".") || desc === topicItems.description
+						? ""
+						: "..."}
+				</Text>
 
 				<View style={{ flexDirection: "row", alignItems: "center" }}>
-					<FontAwesomeFreeSolid name="user" size={15} color="#000000" />
-					<Text style={{ marginLeft: 4, fontFamily: "Montserrat-Bold" }}>
-						{topicItems.count}
-					</Text>
-				</View>
-			</View>
+					<View
+						style={{
+							marginRight: "auto",
+							flexDirection: "row",
+							paddingVertical: 4,
+						}}
+					>
+						<Text>By @{topicItems.author}</Text>
+					</View>
 
-			<View style={{ flexDirection: "row", alignItems: "center" }}>
+					<View style={{ flexDirection: "row", alignItems: "center" }}>
+						<FontAwesomeFreeSolid name="user" size={15} color="#000000" />
+						<Text style={{ marginLeft: 4, fontFamily: "Montserrat-Bold" }}>
+							{topicItems.count}
+						</Text>
+					</View>
+				</View>
+			</TouchableOpacity>
+
+			<ScrollView
+				horizontal
+				nestedScrollEnabled
+				showsHorizontalScrollIndicator={false}
+				contentContainerStyle={{ flexDirection: "row", alignItems: "center" }}
+			>
 				{topicItems.tags.map((tag, tagIndex) => {
 					const tagColor = tagColors[tagIndex % tagColors.length];
 
@@ -133,101 +148,51 @@ const Item = ({
 						</View>
 					);
 				})}
-			</View>
+			</ScrollView>
 		</View>
 	);
 };
 
-const DATA: TopicItem[] = [
-	{
-		id: "bd7acbea-c1b1-46c2-aed5-3ad53abb28ba",
-		topic: "React Native FlatList Performance",
-		description:
-			"Optimizing large lists in React Native by improving rendering efficiency, reducing unnecessary re-renders, and applying techniques that ensure smooth and responsive scrolling even with large datasets.",
-		author: "Alex Johnson",
-		count: 128,
-		tags: ["react-native", "performance", "flatlist"],
-	},
-	{
-		id: "3ac68afc-c605-48d3-a4f8-fbd91aa97f63",
-		topic: "Understanding JavaScript Closures",
-		description:
-			"Explanation of closures with practical examples and common interview questions.",
-		author: "Priya Sharma",
-		count: 76,
-		tags: ["javascript", "functions", "closures"],
-	},
-	{
-		id: "58694a0f-3da1-471f-bd96-145571e29d72",
-		topic: "Introduction to Docker",
-		description:
-			"Basic concepts of containers, Docker images, and container orchestration.",
-		author: "Daniel Lee",
-		count: 54,
-		tags: ["docker", "containers", "devops"],
-	},
-	{
-		id: "bd7acbea-c1b1-46c2-aed5-3bjad53abb28ba",
-		topic: "Neural Networks Basics",
-		description:
-			"Understanding perceptrons, activation functions, and forward propagation.",
-		author: "Sara Kim",
-		count: 92,
-		tags: ["machine-learning", "neural-networks", "ai"],
-	},
-	{
-		id: "3ac68afc-c605-48d3-a4f8-nljfbd91aa97f63",
-		topic: "REST vs GraphQL",
-		description:
-			"Comparison between REST APIs and GraphQL for modern web development.",
-		author: "Michael Brown",
-		count: 61,
-		tags: ["api", "graphql", "rest"],
-	},
-	{
-		id: "58694a0f-3da1-471f-bd96-nlj145571e29d72",
-		topic: "Building Authentication Systems",
-		description:
-			"Implementing login, JWT authentication, and secure session handling.",
-		author: "Ananya Iyer",
-		count: 147,
-		tags: ["authentication", "security", "backend"],
-	},
-	{
-		id: "bd7acbea-c1b1-46c2-aed5-3bbijhjad53abb28ba",
-		topic: "CSS Flexbox Layout Guide",
-		description: "Practical guide to mastering flexbox for responsive layouts.",
-		author: "David Miller",
-		count: 83,
-		tags: ["css", "flexbox", "frontend"],
-	},
-	{
-		id: "3ac68afc-c605-48d3-a4f8-fbdnj91aa97f63",
-		topic: "LangChain for LLM Applications",
-		description:
-			"Using LangChain to build AI powered applications and workflows.",
-		author: "Rohit Mehta",
-		count: 39,
-		tags: ["llm", "langchain", "ai"],
-	},
-	{
-		id: "58694a0f-3da1-471f-bd96-14nj5571e29d72",
-		topic: "Understanding Git Internals",
-		description: "How Git stores commits, trees, and objects internally.",
-		author: "Emily Carter",
-		count: 58,
-		tags: ["git", "version-control", "development"],
-	},
-];
+const mapSpaceToTopicItem = (space: Space): TopicItem => ({
+	id: space.space_id,
+	topic: space.title,
+	description: space.description,
+	author: space.creator.username,
+	count: space.participant_count,
+	tags: space.tags.map((tag) => tag.tag_name),
+});
+
 
 const MyProfile = () => {
+	const { user: profile } = useUser();
+	const [myTopics, setMyTopics] = useState<TopicItem[]>([]);
+	const [selectedVisibility, setSelectedVisibility] = useState<"public" | "private">("public");
+
+	useEffect(() => {
+		const loadMySpaces = async () => {
+			if (!profile) {
+				setMyTopics([]);
+				return;
+			}
+
+			try {
+				const spaces = await getMySpaces();
+				const createdSpaces = spaces.filter(
+					(space) => space.creator.user_id === profile.user_id,
+				);
+				setMyTopics(createdSpaces.map(mapSpaceToTopicItem));
+			} catch {
+				setMyTopics([]);
+			}
+		};
+
+		loadMySpaces();
+	}, [profile]);
+
+	const { setTopicId } = useTopic();
+
 	const { logout } = useAuth();
-	const username: string = "goofygen";
-	const imageUrl =
-		"https://instagram.fmaa6-1.fna.fbcdn.net/v/t51.82787-15/624732511_17861455719591590_9029459131273544920_n.jpg?stp=dst-jpg_s320x320_tt6&efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLmRqYW5nby41NDEuYzIifQ&_nc_ht=instagram.fmaa6-1.fna.fbcdn.net&_nc_cat=1&_nc_oc=Q6cZ2QEGxGfXkVHMlg3mH-uk2_HxocXWW8oW5idEqZ_BRfbMg17HsD3HduuEGtrexMS5FFc&_nc_ohc=v9RZlKdHAbEQ7kNvwE-OsL0&_nc_gid=2T2EV-Rz_bbNCtTFLXncLw&edm=AOQ1c0wBAAAA&ccb=7-5&oh=00_AfxaKzAWpvSw1AqRx54zCBsSseDaFeAGLQqA7yopTEej0A&oe=69B094F4&_nc_sid=8b3546";
-	const apiText: string =
-		"Chess in the brain, dance in the destiny.♟️ \nLose the game… drop the move, drop the groove.";
-	const description = apiText?.replace(/\\n/g, "\n");
+
 	return (
 		<>
 			<View
@@ -376,9 +341,20 @@ const MyProfile = () => {
 						size={35}
 						color="#000000"
 					/>
+					<Lucide
+						style={{
+							position: "absolute",
+							top: 70,
+							left: 380,
+							transform: [{ scale: 0.7 }],
+						}}
+						name="sparkle"
+						size={35}
+						color="#000000"
+					/>
 				</View>
 				<Image
-					source={{ uri: imageUrl }}
+					source={{ uri: profile?.profile_picture }}
 					style={{
 						width: 150,
 						height: 150,
@@ -414,9 +390,10 @@ const MyProfile = () => {
 							marginTop: 70,
 						}}
 					>
-						{username}
+						{profile?.username}
 					</Text>
-					<View
+					{profile?.bio ? (
+						<View
 						style={{
 							backgroundColor: "#fff41dff",
 							borderRadius: 20,
@@ -433,9 +410,9 @@ const MyProfile = () => {
 								padding: 10,
 							}}
 						>
-							{description}
+							{profile?.bio.replace(/\\n/g, "\n")}
 						</Text>
-					</View>
+					</View>) : <Text style={{ fontFamily: "Montserrat-Regular", fontSize: 16, paddingHorizontal: 30, paddingVertical: 10 }}>Share a little about yourself, your interests, or what you like to talk about.</Text>}
 					<View
 						style={{
 							flexDirection: "row",
@@ -472,11 +449,11 @@ const MyProfile = () => {
 							<Text
 								style={{
 									fontFamily: "Montserrat-Bold",
-									fontSize: 45,
+									fontSize: 35,
 									marginVertical: -10,
 								}}
 							>
-								24
+								{profile?.stats.spaces_created}
 							</Text>
 							<Text style={{ fontFamily: "Montserrat-SemiBold", fontSize: 24 }}>
 								Created
@@ -510,11 +487,11 @@ const MyProfile = () => {
 							<Text
 								style={{
 									fontFamily: "Montserrat-Bold",
-									fontSize: 45,
+									fontSize: 35,
 									marginVertical: -10,
 								}}
 							>
-								27
+								{profile?.stats.spaces_participated}
 							</Text>
 							<Text style={{ fontFamily: "Montserrat-SemiBold", fontSize: 24 }}>
 								Participated
@@ -522,48 +499,55 @@ const MyProfile = () => {
 						</View>
 					</View>
 					<View
-						style={{
-							flexDirection: "row",
-							marginTop: 10,
-							alignItems: "flex-start",
-							backgroundColor: "#0a26b1ff",
-							borderRadius: 10,
-							gap: 10,
-						}}
-					>
-						<View
-							style={{
-								backgroundColor: "#ffffff",
-								alignItems: "center",
-								padding: 5,
-								borderRadius: 10,
-								paddingHorizontal: 30,
-								borderWidth: 2,
-								borderRightWidth: 5,
-								borderBottomWidth: 5,
-							}}
-						>
-							<Text style={{ fontFamily: "Montserrat-Bold", fontSize: 32 }}>
-								Public
-							</Text>
-						</View>
-						<View
-							style={{
-								backgroundColor: "#f76db0ff",
-								alignItems: "center",
-								padding: 5,
-								borderRadius: 10,
-								paddingHorizontal: 30,
-								borderWidth: 2,
-								borderRightWidth: 5,
-								borderBottomWidth: 5,
-							}}
-						>
-							<Text style={{ fontFamily: "Montserrat-Bold", fontSize: 32 }}>
-								Private
-							</Text>
-						</View>
-					</View>
+	style={{
+		flexDirection: "row",
+		marginTop: 10,
+		alignItems: "flex-start",
+		backgroundColor: "#0a26b1ff",
+		borderRadius: 10,
+		gap: 10,
+	}}
+>
+	<View
+		style={{
+			backgroundColor: selectedVisibility === "public" ? "#2DD36F" : "#ffffff",
+			alignItems: "center",
+			padding: 5,
+			borderRadius: 10,
+			paddingHorizontal: 30,
+			borderWidth: 2,
+			borderRightWidth: 5,
+			borderBottomWidth: 5,
+		}}
+	>
+		<Text
+			style={{ fontFamily: "Montserrat-Bold", fontSize: 22 }}
+			onPress={() => setSelectedVisibility("public")}
+		>
+			Public
+		</Text>
+	</View>
+
+	<View
+		style={{
+			backgroundColor: selectedVisibility === "private" ? "#f76db0" : "#ffffff",
+			alignItems: "center",
+			padding: 5,
+			borderRadius: 10,
+			paddingHorizontal: 30,
+			borderWidth: 2,
+			borderRightWidth: 5,
+			borderBottomWidth: 5,
+		}}
+	>
+		<Text
+			style={{ fontFamily: "Montserrat-Bold", fontSize: 22 }}
+			onPress={() => setSelectedVisibility("private")}
+		>
+			Private
+		</Text>
+	</View>
+</View>
 					<View
 						style={{
 							flex: 1,
@@ -571,12 +555,32 @@ const MyProfile = () => {
 						}}
 					>
 						<FlatList
-							data={DATA}
+							style={{ marginBottom: 80 }}
+							showsHorizontalScrollIndicator={false}
+							showsVerticalScrollIndicator={false}
+							data={myTopics}
 							renderItem={({ item, index }) => (
-								<Item topicItems={item} index={index} placement="adaptive" />
+								<Item
+									topicItems={item}
+									index={index}
+									onPress={() => setTopicId(item.id)}
+									placement="adaptive"
+								/>
 							)}
 							keyExtractor={(item) => item.id}
 							scrollEnabled={false}
+							ListEmptyComponent={
+								<Text
+									style={{
+										paddingHorizontal: 12,
+										paddingVertical: 16,
+										fontFamily: "Montserrat-Medium",
+										color: "black",
+									}}
+								>
+									No spaces created yet.
+								</Text>
+							}
 						/>
 					</View>
 				</View>
