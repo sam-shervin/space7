@@ -2,7 +2,7 @@
  * Tests for src/context/UserContext.ts
  */
 
-import { act, renderHook } from "@testing-library/react-hooks";
+import { act, renderHook } from "@testing-library/react-native";
 import React from "react";
 import { AuthProvider } from "../../src/context/AuthContext";
 import { UserProvider, useUser } from "../../src/context/UserContext";
@@ -163,8 +163,7 @@ describe("UserProvider – clearUser", () => {
 
 describe("useUser", () => {
 	it("throws when used outside UserProvider", () => {
-		const { result } = renderHook(() => useUser());
-		expect(result.error?.message).toBe(
+		expect(() => renderHook(() => useUser())).toThrow(
 			"useUser must be used inside UserProvider",
 		);
 	});
