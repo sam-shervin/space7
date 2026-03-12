@@ -330,7 +330,10 @@ const MyDiscussions = () => {
 						data={spaces}
 						style={{ marginBottom: 80 }}
 						renderItem={({ item }) => (
-							<SpaceItem item={item} onPress={() => setTopicId(item.space_id)} />
+							<SpaceItem
+								item={item}
+								onPress={() => setTopicId(item.space_id)}
+							/>
 						)}
 						keyExtractor={(item) => item.space_id}
 						contentContainerStyle={{ paddingVertical: 12 }}

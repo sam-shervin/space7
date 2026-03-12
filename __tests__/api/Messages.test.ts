@@ -3,11 +3,11 @@
  */
 
 import {
+	deleteMessage,
 	getMessages,
+	type Message,
 	sendMessage,
 	toggleMessageAppreciation,
-	deleteMessage,
-	type Message,
 } from "../../src/api/Messages";
 
 jest.mock("../../src/api/fetchWithAuth", () => ({
@@ -15,6 +15,7 @@ jest.mock("../../src/api/fetchWithAuth", () => ({
 }));
 
 import { fetchWithAuth } from "../../src/api/fetchWithAuth";
+
 const mockFetchWithAuth = fetchWithAuth as jest.MockedFunction<
 	typeof fetchWithAuth
 >;
@@ -115,9 +116,9 @@ describe("getMessages", () => {
 
 describe("sendMessage – client-side validation", () => {
 	it("throws immediately when content is empty and no media", async () => {
-		await expect(
-			sendMessage("space-1", { content: "   " }),
-		).rejects.toThrow("Message must have text or media");
+		await expect(sendMessage("space-1", { content: "   " })).rejects.toThrow(
+			"Message must have text or media",
+		);
 	});
 
 	it("throws immediately when neither content nor media is provided", async () => {
@@ -160,9 +161,9 @@ describe("toggleMessageAppreciation", () => {
 			makeErrorResponse({ error: "Failed to appreciate message" }, 500),
 		);
 
-		await expect(
-			toggleMessageAppreciation("space-1", "msg-1"),
-		).rejects.toThrow("Failed to appreciate message");
+		await expect(toggleMessageAppreciation("space-1", "msg-1")).rejects.toThrow(
+			"Failed to appreciate message",
+		);
 	});
 });
 

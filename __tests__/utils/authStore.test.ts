@@ -2,11 +2,12 @@
  * Tests for src/utils/authStore.ts
  */
 
-import { saveToken, getToken, clearToken } from "../../src/utils/authStore";
+import { clearToken, getToken, saveToken } from "../../src/utils/authStore";
 
 jest.mock("react-native-keychain");
 
 import * as Keychain from "react-native-keychain";
+
 const mockKeychain = Keychain as jest.Mocked<typeof Keychain>;
 
 beforeEach(() => {

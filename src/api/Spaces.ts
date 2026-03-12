@@ -1,5 +1,5 @@
-import { fetchWithAuth } from "./fetchWithAuth";
 import { API } from "../constants/Network";
+import { fetchWithAuth } from "./fetchWithAuth";
 
 export type SpaceCreator = {
 	user_id: string;
@@ -136,7 +136,6 @@ const createSpace = async (payload: CreateSpacePayload): Promise<Space> => {
 
 	return data;
 };
-
 
 const getSpaceById = async (spaceId: string): Promise<Space> => {
 	const res = await fetchWithAuth(`${API}/api/spaces/${spaceId}`, {

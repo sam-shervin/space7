@@ -3,11 +3,11 @@
  */
 
 import {
-	getTrendingSpaces,
-	getRecommendedSpaces,
-	getMySpaces,
 	createSpace,
+	getMySpaces,
+	getRecommendedSpaces,
 	getSpaceById,
+	getTrendingSpaces,
 	joinSpace,
 	type Space,
 } from "../../src/api/Spaces";
@@ -18,6 +18,7 @@ jest.mock("../../src/api/fetchWithAuth", () => ({
 }));
 
 import { fetchWithAuth } from "../../src/api/fetchWithAuth";
+
 const mockFetchWithAuth = fetchWithAuth as jest.MockedFunction<
 	typeof fetchWithAuth
 >;

@@ -1,6 +1,7 @@
 import FontAwesomeFreeSolid from "@react-native-vector-icons/fontawesome-free-solid";
 import Lucide from "@react-native-vector-icons/lucide";
 import shuffle from "lodash.shuffle";
+import { useEffect, useState } from "react";
 import {
 	FlatList,
 	Image,
@@ -9,14 +10,12 @@ import {
 	TouchableOpacity,
 	View,
 } from "react-native";
+import type { Space } from "../../api/Spaces";
+import { getMySpaces } from "../../api/Spaces";
 import { useAuth } from "../../context/AuthContext";
+import { useTopic } from "../../context/SpaceContext";
 import { useUser } from "../../context/UserContext";
 import type { TopicItem } from "../../types/types";
-import { getMySpaces } from "../../api/Spaces";
-import type { Space } from "../../api/Spaces";
-import { useEffect, useState } from "react";
-import { useTopic } from "../../context/SpaceContext";
-
 
 const Item = ({
 	topicItems,
@@ -77,7 +76,8 @@ const Item = ({
 					}}
 				>
 					{slicedTopic}
-					{slicedTopic.trimEnd().endsWith(".") || slicedTopic === topicItems.topic
+					{slicedTopic.trimEnd().endsWith(".") ||
+					slicedTopic === topicItems.topic
 						? ""
 						: "..."}
 				</Text>
@@ -162,11 +162,12 @@ const mapSpaceToTopicItem = (space: Space): TopicItem => ({
 	tags: space.tags.map((tag) => tag.tag_name),
 });
 
-
 const MyProfile = () => {
 	const { user: profile } = useUser();
 	const [myTopics, setMyTopics] = useState<TopicItem[]>([]);
-	const [selectedVisibility, setSelectedVisibility] = useState<"public" | "private">("public");
+	const [selectedVisibility, setSelectedVisibility] = useState<
+		"public" | "private"
+	>("public");
 
 	useEffect(() => {
 		const loadMySpaces = async () => {
@@ -394,25 +395,38 @@ const MyProfile = () => {
 					</Text>
 					{profile?.bio ? (
 						<View
-						style={{
-							backgroundColor: "#fff41dff",
-							borderRadius: 20,
-							borderWidth: 2,
-							marginHorizontal: 20,
-							borderBottomWidth: 5,
-							borderRightWidth: 5,
-						}}
-					>
+							style={{
+								backgroundColor: "#fff41dff",
+								borderRadius: 20,
+								borderWidth: 2,
+								marginHorizontal: 20,
+								borderBottomWidth: 5,
+								borderRightWidth: 5,
+							}}
+						>
+							<Text
+								style={{
+									fontFamily: "Montserrat-Regular",
+									fontSize: 16,
+									padding: 10,
+								}}
+							>
+								{profile?.bio.replace(/\\n/g, "\n")}
+							</Text>
+						</View>
+					) : (
 						<Text
 							style={{
 								fontFamily: "Montserrat-Regular",
 								fontSize: 16,
-								padding: 10,
+								paddingHorizontal: 30,
+								paddingVertical: 10,
 							}}
 						>
-							{profile?.bio.replace(/\\n/g, "\n")}
+							Share a little about yourself, your interests, or what you like to
+							talk about.
 						</Text>
-					</View>) : <Text style={{ fontFamily: "Montserrat-Regular", fontSize: 16, paddingHorizontal: 30, paddingVertical: 10 }}>Share a little about yourself, your interests, or what you like to talk about.</Text>}
+					)}
 					<View
 						style={{
 							flexDirection: "row",
@@ -499,55 +513,57 @@ const MyProfile = () => {
 						</View>
 					</View>
 					<View
-	style={{
-		flexDirection: "row",
-		marginTop: 10,
-		alignItems: "flex-start",
-		backgroundColor: "#0a26b1ff",
-		borderRadius: 10,
-		gap: 10,
-	}}
->
-	<View
-		style={{
-			backgroundColor: selectedVisibility === "public" ? "#2DD36F" : "#ffffff",
-			alignItems: "center",
-			padding: 5,
-			borderRadius: 10,
-			paddingHorizontal: 30,
-			borderWidth: 2,
-			borderRightWidth: 5,
-			borderBottomWidth: 5,
-		}}
-	>
-		<Text
-			style={{ fontFamily: "Montserrat-Bold", fontSize: 22 }}
-			onPress={() => setSelectedVisibility("public")}
-		>
-			Public
-		</Text>
-	</View>
+						style={{
+							flexDirection: "row",
+							marginTop: 10,
+							alignItems: "flex-start",
+							backgroundColor: "#0a26b1ff",
+							borderRadius: 10,
+							gap: 10,
+						}}
+					>
+						<View
+							style={{
+								backgroundColor:
+									selectedVisibility === "public" ? "#2DD36F" : "#ffffff",
+								alignItems: "center",
+								padding: 5,
+								borderRadius: 10,
+								paddingHorizontal: 30,
+								borderWidth: 2,
+								borderRightWidth: 5,
+								borderBottomWidth: 5,
+							}}
+						>
+							<Text
+								style={{ fontFamily: "Montserrat-Bold", fontSize: 22 }}
+								onPress={() => setSelectedVisibility("public")}
+							>
+								Public
+							</Text>
+						</View>
 
-	<View
-		style={{
-			backgroundColor: selectedVisibility === "private" ? "#f76db0" : "#ffffff",
-			alignItems: "center",
-			padding: 5,
-			borderRadius: 10,
-			paddingHorizontal: 30,
-			borderWidth: 2,
-			borderRightWidth: 5,
-			borderBottomWidth: 5,
-		}}
-	>
-		<Text
-			style={{ fontFamily: "Montserrat-Bold", fontSize: 22 }}
-			onPress={() => setSelectedVisibility("private")}
-		>
-			Private
-		</Text>
-	</View>
-</View>
+						<View
+							style={{
+								backgroundColor:
+									selectedVisibility === "private" ? "#f76db0" : "#ffffff",
+								alignItems: "center",
+								padding: 5,
+								borderRadius: 10,
+								paddingHorizontal: 30,
+								borderWidth: 2,
+								borderRightWidth: 5,
+								borderBottomWidth: 5,
+							}}
+						>
+							<Text
+								style={{ fontFamily: "Montserrat-Bold", fontSize: 22 }}
+								onPress={() => setSelectedVisibility("private")}
+							>
+								Private
+							</Text>
+						</View>
+					</View>
 					<View
 						style={{
 							flex: 1,

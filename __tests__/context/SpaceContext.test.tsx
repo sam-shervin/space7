@@ -2,8 +2,8 @@
  * Tests for src/context/SpaceContext.ts (TopicContext / useTopic)
  */
 
+import { act, renderHook } from "@testing-library/react-hooks";
 import React, { useState } from "react";
-import { renderHook, act } from "@testing-library/react-hooks";
 import { TopicContext, useTopic } from "../../src/context/SpaceContext";
 
 // A simple test provider that exposes state via TopicContext
