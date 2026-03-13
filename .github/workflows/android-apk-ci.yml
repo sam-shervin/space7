@@ -4,59 +4,89 @@ on:
   push:
     branches: [release/v0.0.1]
     tags: ["v*"]
+  release:
+    types: [published]
   pull_request:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Release tag to upload APK to (example: v0.0.1)"
+        required: false
+        type: string
+
+permissions:
+  contents: write
 
 jobs:
-    build:
-        runs-on: ubuntu-latest
+  build:
+    runs-on: ubuntu-latest
 
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v6.0.2
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6.0.2
 
-            - name: Setup Node.js environment
-              uses: actions/setup-node@v6.3.0
-              with:
-                node-version: 24
-                cache: 'npm'
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v6.3.0
+        with:
+          node-version: 24
+          cache: "npm"
 
-            - name: Create .env
-              run: |
-                echo "SERVER_ENDPOINT=${{ secrets.API }}" >> .env
+      - name: Create .env
+        run: |
+          echo "SERVER_ENDPOINT=${{ secrets.API }}" >> .env
 
-            - name: Setup Java JDK
-              uses: actions/setup-java@v5.2.0
-              with:
-                distribution: 'temurin'
-                java-version: 17
-                cache: 'gradle'
-            
-            - name: Install Node.js dependencies
-              run: npm ci
-            
-            - name: Setup Biome
-              uses: biomejs/setup-biome@v2
-              with:
-                version: latest
+      - name: Setup Java JDK
+        uses: actions/setup-java@v5.2.0
+        with:
+          distribution: "temurin"
+          java-version: 17
+          cache: "gradle"
 
-            - name: Run Biome
-              run: biome ci .
-            
-            - name: Run tests
-              run: npm test
+      - name: Install Node.js dependencies
+        run: npm ci
 
-            - name: Grant execute permissions for gradlew
-              run: chmod +x android/gradlew
+      - name: Setup Biome
+        uses: biomejs/setup-biome@v2
+        with:
+          version: latest
 
-            - name: Build APK
-              run: |
-                cd android
-                ./gradlew assembleRelease
+      - name: Run Biome
+        run: biome ci .
 
-            - name: Upload a Build Artifact
-              uses: actions/upload-artifact@v7.0.0
-              with:
-                name: android-apk
-                path: android/app/build/outputs/apk/release/app-release.apk
+      - name: Run tests
+        run: npm test
+
+      - name: Grant execute permissions for gradlew
+        run: chmod +x android/gradlew
+
+      - name: Build APK
+        run: |
+          cd android
+          ./gradlew assembleRelease
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v7.0.0
+        with:
+          name: android-apk
+          path: android/app/build/outputs/apk/release/app-release.apk
+
+      - name: Attach APK to release (tag push)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: android/app/build/outputs/apk/release/app-release.apk
+
+      - name: Attach APK to release (release event)
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.release.tag_name }}
+          files: android/app/build/outputs/apk/release/app-release.apk
+
+      - name: Attach APK to release (manual)
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag != ''
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.release_tag }}
+          files: android/app/build/outputs/apk/release/app-release.apk
