@@ -28,6 +28,7 @@ const Tab = createBottomTabNavigator({
 		Home: {
 			screen: Home,
 			options: {
+				tabBarLabel: "Home",
 				tabBarIcon: ({ focused }) => (
 					<View
 						style={{
@@ -53,6 +54,7 @@ const Tab = createBottomTabNavigator({
 		NewTopic: {
 			screen: NewTopic,
 			options: {
+				tabBarLabel: "New Topic",
 				tabBarIcon: () => (
 					<View
 						style={{
@@ -82,7 +84,9 @@ const Tab = createBottomTabNavigator({
 
 		MyDiscussions: {
 			screen: MyDiscussions,
+			
 			options: {
+				tabBarLabel: "My Discussions",
 				tabBarIcon: ({ focused }) => (
 					<View
 						style={{
@@ -108,6 +112,7 @@ const Tab = createBottomTabNavigator({
 		MyProfile: {
 			screen: MyProfile,
 			options: {
+				tabBarLabel: "My Profile",
 				tabBarIcon: ({ focused }) => (
 					<View
 						style={{
@@ -224,7 +229,7 @@ function MyTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 						>
 							{icon}
 						</Animated.View>
-						<Text style={{ fontFamily: "Montserrat-Bold", fontSize: 13 }}>
+						<Text style={{ fontFamily: "Montserrat-Bold", fontSize: 10 }}>
 							{label}
 						</Text>
 					</PlatformPressable>

@@ -3,6 +3,8 @@ import { useNavigation } from "@react-navigation/native";
 import { useMemo, useState } from "react";
 import {
 	ScrollView,
+	KeyboardAvoidingView,
+	Platform,
 	StyleSheet,
 	Text,
 	TextInput,
@@ -82,10 +84,15 @@ const NewTopic = () => {
 		}
 	};
 
-	return (
+		return (
+	<KeyboardAvoidingView
+		style={{ flex: 1 }}
+		behavior={Platform.OS === "ios" ? "padding" : "height"}
+	>
 		<ScrollView
-			style={{ flex: 1 }}
-			contentContainerStyle={{ paddingBottom: 30 }}
+			style={{ flex: 1}}
+			contentContainerStyle={{ paddingBottom: 150 }}
+			keyboardShouldPersistTaps="handled"
 		>
 			<View style={styles.headerBackground}>
 				{/*Header*/}
@@ -440,9 +447,12 @@ const NewTopic = () => {
 						</Text>
 					</View>
 				</TouchableOpacity>
+				
 			</View>
-		</ScrollView>
-	);
+			
+			</ScrollView>
+	</KeyboardAvoidingView>
+);
 };
 
 export default NewTopic;
