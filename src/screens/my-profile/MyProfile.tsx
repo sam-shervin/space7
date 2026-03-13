@@ -16,7 +16,8 @@ import { useAuth } from "../../context/AuthContext";
 import { useTopic } from "../../context/SpaceContext";
 import { useUser } from "../../context/UserContext";
 import type { TopicItem } from "../../types/types";
-const happyRobot = require("../../assets/images/happy_robot.png")
+
+const happyRobot = require("../../assets/images/happy_robot.png");
 
 const Item = ({
 	topicItems,
@@ -356,24 +357,24 @@ const MyProfile = () => {
 					/>
 				</View>
 				<Image
-	source={
-		profile?.profile_picture
-			? { uri: profile.profile_picture }
-			: happyRobot
-	}
-	style={{
-		width: 150,
-		height: 150,
-		borderRadius: 150,
-		alignSelf: "center",
-		top: 40,
-		borderWidth: 5,
-		borderColor: "#181805ff",
-		resizeMode: "cover",
-		zIndex: 2,
-		position: "absolute",
-	}}
-/>
+					source={
+						profile?.profile_picture
+							? { uri: profile.profile_picture }
+							: happyRobot
+					}
+					style={{
+						width: 150,
+						height: 150,
+						borderRadius: 150,
+						alignSelf: "center",
+						top: 40,
+						borderWidth: 5,
+						borderColor: "#181805ff",
+						resizeMode: "cover",
+						zIndex: 2,
+						position: "absolute",
+					}}
+				/>
 				<View
 					style={{
 						backgroundColor: "#ffffff",

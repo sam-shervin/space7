@@ -3,8 +3,8 @@ import { useEffect, useLayoutEffect, useState } from "react";
 import {
 	Image,
 	KeyboardAvoidingView,
-	Platform,
 	Modal,
+	Platform,
 	ScrollView,
 	Text,
 	TextInput,
@@ -156,10 +156,10 @@ export const Space = ({ topicId }: { topicId: string }) => {
 		}
 	};
 	return (
-<KeyboardAvoidingView
-	style={{ flex: 1, backgroundColor: colors[4] }}
-	behavior={Platform.OS === "ios" ? "padding" : "height"}
->
+		<KeyboardAvoidingView
+			style={{ flex: 1, backgroundColor: colors[4] }}
+			behavior={Platform.OS === "ios" ? "padding" : "height"}
+		>
 			<Modal
 				transparent
 				animationType="fade"
@@ -617,19 +617,19 @@ export const Space = ({ topicId }: { topicId: string }) => {
 					</View>
 				</View>
 			</ScrollView>
-			
-<View
-	style={{
-		flexDirection: "row",
-		alignItems: "center",
-		paddingHorizontal: 10,
-		paddingTop: 10,
-		paddingBottom: 14,
-		backgroundColor: colors[0],
-		borderLeftWidth: 2,
-		borderRightWidth: 2,
-	}}
->
+
+			<View
+				style={{
+					flexDirection: "row",
+					alignItems: "center",
+					paddingHorizontal: 10,
+					paddingTop: 10,
+					paddingBottom: 14,
+					backgroundColor: colors[0],
+					borderLeftWidth: 2,
+					borderRightWidth: 2,
+				}}
+			>
 				<TextInput
 					value={messageText}
 					onChangeText={setMessageText}

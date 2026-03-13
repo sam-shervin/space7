@@ -84,7 +84,7 @@ const Tab = createBottomTabNavigator({
 
 		MyDiscussions: {
 			screen: MyDiscussions,
-			
+
 			options: {
 				tabBarLabel: "My Discussions",
 				tabBarIcon: ({ focused }) => (
