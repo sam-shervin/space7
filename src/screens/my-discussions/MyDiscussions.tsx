@@ -14,8 +14,6 @@ import { useTopic } from "../../context/SpaceContext";
 
 const SadRobotText = require("../../assets/images/sad_robot_text.png");
 
-type VisibilityFilter = "all" | "public" | "private";
-
 const styles = StyleSheet.create({
 	headerBackground: {
 		paddingTop: 30,
@@ -32,18 +30,6 @@ const styles = StyleSheet.create({
 		flexDirection: "row",
 		paddingHorizontal: 15,
 		alignItems: "center",
-	},
-	filterButton: {
-		paddingVertical: 6,
-		paddingHorizontal: 12,
-		borderWidth: 2,
-		borderColor: "black",
-		borderRadius: 20,
-		marginRight: 8,
-		backgroundColor: "white",
-	},
-	activeFilterButton: {
-		backgroundColor: "#FB3498",
 	},
 	spaceCard: {
 		backgroundColor: "white",
@@ -79,21 +65,6 @@ const SpaceItem = ({ item, onPress }: { item: Space; onPress: () => void }) => {
 					>
 						{item.title}
 					</Text>
-					<View
-						style={{
-							backgroundColor:
-								item.visibility === "public" ? "#55D569" : "#8A5CF6",
-							paddingHorizontal: 10,
-							paddingVertical: 4,
-							borderRadius: 999,
-							borderWidth: 1,
-							borderColor: "black",
-						}}
-					>
-						<Text style={{ fontFamily: "Montserrat-Bold", color: "black" }}>
-							{item.visibility}
-						</Text>
-					</View>
 				</View>
 
 				<Text
@@ -175,7 +146,6 @@ const SpaceItem = ({ item, onPress }: { item: Space; onPress: () => void }) => {
 
 const MyDiscussions = () => {
 	const { setTopicId } = useTopic();
-	const [selectedFilter, setSelectedFilter] = useState<VisibilityFilter>("all");
 	const [spaces, setSpaces] = useState<Space[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
@@ -186,9 +156,7 @@ const MyDiscussions = () => {
 				setLoading(true);
 				setError(null);
 
-				const data = await getMySpaces({
-					visibility: selectedFilter === "all" ? undefined : selectedFilter,
-				});
+				const data = await getMySpaces();
 
 				setSpaces(data);
 			} catch (loadError) {
@@ -203,7 +171,7 @@ const MyDiscussions = () => {
 		};
 
 		loadMySpaces();
-	}, [selectedFilter]);
+	}, []);
 
 	return (
 		<View style={{ flex: 1 }}>
@@ -213,21 +181,6 @@ const MyDiscussions = () => {
 					<Text style={styles.logoText}>
 						space<Text style={{ color: "yellow" }}>7</Text>
 					</Text>
-
-					<FontAwesomeFreeSolid
-						style={{
-							padding: 3,
-							backgroundColor: "#FB3498",
-							borderRadius: 8,
-							borderWidth: 3,
-							borderColor: "black",
-							marginLeft: 5,
-							paddingHorizontal: 10,
-						}}
-						name="x"
-						size={23}
-						color="#000000"
-					/>
 				</View>
 			</View>
 			<View
@@ -241,35 +194,6 @@ const MyDiscussions = () => {
 				<Text style={{ fontFamily: "Montserrat-ExtraBold", fontSize: 32 }}>
 					My Discussions
 				</Text>
-				<ScrollView
-					horizontal
-					showsHorizontalScrollIndicator={false}
-					contentContainerStyle={{ marginTop: 10 }}
-				>
-					{(["all", "public", "private"] as VisibilityFilter[]).map(
-						(filter) => (
-							<TouchableOpacity
-								key={filter}
-								onPress={() => setSelectedFilter(filter)}
-								style={[
-									styles.filterButton,
-									selectedFilter === filter && styles.activeFilterButton,
-								]}
-							>
-								<Text
-									style={{
-										fontFamily: "Montserrat-Bold",
-										color: "black",
-									}}
-								>
-									{filter === "all"
-										? "All"
-										: filter.charAt(0).toUpperCase() + filter.slice(1)}
-								</Text>
-							</TouchableOpacity>
-						),
-					)}
-				</ScrollView>
 			</View>
 			<View
 				style={{

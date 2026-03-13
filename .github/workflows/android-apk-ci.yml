@@ -1,8 +1,12 @@
 name: Run Android CI
 
 on:
-    pull_request:
-        branches: [main]
+  push:
+    branches: [release/v0.0.1]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
 
 jobs:
     build:

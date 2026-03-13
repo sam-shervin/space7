@@ -167,9 +167,6 @@ const mapSpaceToTopicItem = (space: Space): TopicItem => ({
 const MyProfile = () => {
 	const { user: profile } = useUser();
 	const [myTopics, setMyTopics] = useState<TopicItem[]>([]);
-	const [selectedVisibility, setSelectedVisibility] = useState<
-		"public" | "private"
-	>("public");
 
 	useEffect(() => {
 		const loadMySpaces = async () => {
@@ -216,21 +213,6 @@ const MyProfile = () => {
 				>
 					My Profile
 				</Text>
-				<FontAwesomeFreeSolid
-					name="bars"
-					size={28}
-					color="#000000"
-					style={{
-						borderWidth: 3,
-						borderColor: "black",
-						borderRadius: 8,
-						paddingHorizontal: 5,
-						alignSelf: "center",
-						backgroundColor: "#FDD827",
-						borderBottomWidth: 5,
-						borderRightWidth: 5,
-					}}
-				/>
 				<TouchableOpacity
 					onPress={logout}
 					style={{
@@ -515,58 +497,6 @@ const MyProfile = () => {
 							</Text>
 							<Text style={{ fontFamily: "Montserrat-SemiBold", fontSize: 24 }}>
 								Participated
-							</Text>
-						</View>
-					</View>
-					<View
-						style={{
-							flexDirection: "row",
-							marginTop: 10,
-							alignItems: "flex-start",
-							backgroundColor: "#0a26b1ff",
-							borderRadius: 10,
-							gap: 10,
-						}}
-					>
-						<View
-							style={{
-								backgroundColor:
-									selectedVisibility === "public" ? "#2DD36F" : "#ffffff",
-								alignItems: "center",
-								padding: 5,
-								borderRadius: 10,
-								paddingHorizontal: 30,
-								borderWidth: 2,
-								borderRightWidth: 5,
-								borderBottomWidth: 5,
-							}}
-						>
-							<Text
-								style={{ fontFamily: "Montserrat-Bold", fontSize: 22 }}
-								onPress={() => setSelectedVisibility("public")}
-							>
-								Public
-							</Text>
-						</View>
-
-						<View
-							style={{
-								backgroundColor:
-									selectedVisibility === "private" ? "#f76db0" : "#ffffff",
-								alignItems: "center",
-								padding: 5,
-								borderRadius: 10,
-								paddingHorizontal: 30,
-								borderWidth: 2,
-								borderRightWidth: 5,
-								borderBottomWidth: 5,
-							}}
-						>
-							<Text
-								style={{ fontFamily: "Montserrat-Bold", fontSize: 22 }}
-								onPress={() => setSelectedVisibility("private")}
-							>
-								Private
 							</Text>
 						</View>
 					</View>
