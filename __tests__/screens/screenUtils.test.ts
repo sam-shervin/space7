@@ -23,7 +23,6 @@ const sampleSpace: Space = {
 	space_id: "space-1",
 	title: "AI in 2026",
 	description: "Discussing the impact of AI",
-	visibility: "public",
 	creator: { user_id: "user-1", username: "alice", profile_picture: "" },
 	participant_count: 42,
 	tags: [

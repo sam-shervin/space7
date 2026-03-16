@@ -1,4 +1,3 @@
-import { FontAwesomeFreeSolid } from "@react-native-vector-icons/fontawesome-free-solid";
 import { useNavigation } from "@react-navigation/native";
 import { useMemo, useState } from "react";
 import {
@@ -11,7 +10,7 @@ import {
 	TouchableOpacity,
 	View,
 } from "react-native";
-import { createSpace, type Space } from "../../api/Spaces";
+import { createSpace } from "../../api/Spaces";
 
 const styles = StyleSheet.create({
 	headerBackground: {
@@ -41,7 +40,7 @@ const NewTopic = () => {
 	const [title, setTitle] = useState("");
 	const [description, setDescription] = useState("");
 	const [hashtagsInput, setHashtagsInput] = useState("");
-	const [visibility, setVisibility] = useState<Space["visibility"]>("public");
+	const visibility: "public" = "public";
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState("");
 
@@ -100,21 +99,6 @@ const NewTopic = () => {
 						<Text style={styles.logoText}>
 							space<Text style={{ color: "yellow" }}>7</Text>
 						</Text>
-
-						<FontAwesomeFreeSolid
-							style={{
-								padding: 3,
-								backgroundColor: "#FB3498",
-								borderRadius: 8,
-								borderWidth: 3,
-								borderColor: "black",
-								marginLeft: 5,
-								paddingHorizontal: 10,
-							}}
-							name="x"
-							size={23}
-							color="#000000"
-						/>
 					</View>
 				</View>
 				<View
@@ -325,80 +309,7 @@ const NewTopic = () => {
 						</ScrollView>
 					)}
 				</View>
-				<View
-					style={{
-						flexDirection: "row",
-						alignItems: "center",
-						marginHorizontal: 20,
-					}}
-				>
-					<TouchableOpacity
-						style={{ flex: 1, alignItems: "center" }}
-						activeOpacity={1}
-						onPress={() => setVisibility("public")}
-					>
-						<View
-							style={{
-								padding: 10,
-								borderWidth: 3,
-								borderColor: "black",
-								borderRadius: 16,
-								flexDirection: "row",
-								alignItems: "center",
-								width: "90%",
-								justifyContent: "center",
-								backgroundColor:
-									visibility === "public" ? "#00e85dff" : "#e0f9e8ff",
-								borderBottomWidth: visibility === "public" ? 5 : 3,
-								borderRightWidth: visibility === "public" ? 5 : 3,
-							}}
-						>
-							<FontAwesomeFreeSolid name={"globe"} size={23} color="#000000" />
-							<Text
-								style={{
-									fontFamily: "Montserrat-ExtraBold",
-									fontSize: 20,
-									marginLeft: 5,
-								}}
-							>
-								Public
-							</Text>
-						</View>
-					</TouchableOpacity>
-					<TouchableOpacity
-						style={{ flex: 1, alignItems: "center" }}
-						activeOpacity={1}
-						onPress={() => setVisibility("private")}
-					>
-						<View
-							style={{
-								padding: 10,
-								borderWidth: 3,
-								borderColor: "black",
-								borderRadius: 16,
-								flexDirection: "row",
-								alignItems: "center",
-								width: "90%",
-								justifyContent: "center",
-								backgroundColor:
-									visibility === "private" ? "#FF4FA3" : "#fcf3f7ff",
-								borderBottomWidth: visibility === "private" ? 5 : 3,
-								borderRightWidth: visibility === "private" ? 5 : 3,
-							}}
-						>
-							<FontAwesomeFreeSolid name={"lock"} size={23} color="#000000" />
-							<Text
-								style={{
-									fontFamily: "Montserrat-ExtraBold",
-									fontSize: 20,
-									marginLeft: 5,
-								}}
-							>
-								Private
-							</Text>
-						</View>
-					</TouchableOpacity>
-				</View>
+
 				{error ? (
 					<Text
 						style={{
