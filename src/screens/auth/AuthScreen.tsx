@@ -3,7 +3,7 @@ import { Image, View } from "react-native";
 const logo = require("../../assets/images/logo.png");
 
 import { useState } from "react";
-// import { ForgotScreen } from "./ForgotScreen";
+import { ForgotScreen } from "./ForgotScreen";
 import { LoginScreen } from "./LoginScreen";
 import { SignUpScreen } from "./SignUpScreen";
 
@@ -32,7 +32,7 @@ const AuthScreen = () => {
 				<Image source={logo} style={{ width: 200, height: 200 }} />
 				{screen === "login" && <LoginScreen setScreen={setScreen} />}
 				{screen === "signup" && <SignUpScreen setScreen={setScreen} />}
-				{/* {screen === "forgot" && <ForgotScreen setScreen={setScreen} />} */}
+				{screen === "forgot" && <ForgotScreen setScreen={setScreen} />}
 			</View>
 		</View>
 	);
