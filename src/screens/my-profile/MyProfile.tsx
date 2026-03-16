@@ -1,10 +1,11 @@
 import FontAwesomeFreeSolid from "@react-native-vector-icons/fontawesome-free-solid";
 import Lucide from "@react-native-vector-icons/lucide";
 import shuffle from "lodash.shuffle";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
 	FlatList,
 	Image,
+	RefreshControl,
 	ScrollView,
 	Text,
 	TouchableOpacity,
@@ -16,6 +17,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useTopic } from "../../context/SpaceContext";
 import { useUser } from "../../context/UserContext";
 import type { TopicItem } from "../../types/types";
+import Profile from "./ProfileSettings";
 
 const happyRobot = require("../../assets/images/happy_robot.png");
 
@@ -165,32 +167,42 @@ const mapSpaceToTopicItem = (space: Space): TopicItem => ({
 });
 
 const MyProfile = () => {
-	const { user: profile } = useUser();
+	const { user: profile, refreshUser } = useUser();
 	const [myTopics, setMyTopics] = useState<TopicItem[]>([]);
-	const [selectedVisibility, setSelectedVisibility] = useState<
-		"public" | "private"
-	>("public");
+	const [refreshing, setRefreshing] = useState(false);
+	const [showProfileActions, setShowProfileActions] = useState(false);
+
+	const loadMySpaces = useCallback(async () => {
+		if (!profile) {
+			setMyTopics([]);
+			return;
+		}
+
+		try {
+			const spaces = await getMySpaces();
+			const createdSpaces = spaces.filter(
+				(space) => space.creator.user_id === profile.user_id,
+			);
+			setMyTopics(createdSpaces.map(mapSpaceToTopicItem));
+		} catch {
+			setMyTopics([]);
+		}
+	}, [profile]);
 
 	useEffect(() => {
-		const loadMySpaces = async () => {
-			if (!profile) {
-				setMyTopics([]);
-				return;
-			}
-
-			try {
-				const spaces = await getMySpaces();
-				const createdSpaces = spaces.filter(
-					(space) => space.creator.user_id === profile.user_id,
-				);
-				setMyTopics(createdSpaces.map(mapSpaceToTopicItem));
-			} catch {
-				setMyTopics([]);
-			}
-		};
-
 		loadMySpaces();
-	}, [profile]);
+	}, [loadMySpaces]);
+
+	const refreshProfileData = useCallback(async () => {
+		await loadMySpaces();
+		await refreshUser();
+	}, [loadMySpaces, refreshUser]);
+
+	const onRefresh = async () => {
+		setRefreshing(true);
+		await refreshProfileData();
+		setRefreshing(false);
+	};
 
 	const { setTopicId } = useTopic();
 
@@ -216,10 +228,8 @@ const MyProfile = () => {
 				>
 					My Profile
 				</Text>
-				<FontAwesomeFreeSolid
-					name="bars"
-					size={28}
-					color="#000000"
+				<TouchableOpacity
+					onPress={() => setShowProfileActions(true)}
 					style={{
 						borderWidth: 3,
 						borderColor: "black",
@@ -230,7 +240,9 @@ const MyProfile = () => {
 						borderBottomWidth: 5,
 						borderRightWidth: 5,
 					}}
-				/>
+				>
+					<FontAwesomeFreeSolid name="bars" size={28} color="#000000" />
+				</TouchableOpacity>
 				<TouchableOpacity
 					onPress={logout}
 					style={{
@@ -254,6 +266,9 @@ const MyProfile = () => {
 			<ScrollView
 				style={{ backgroundColor: "#FDD827", flex: 1 }}
 				contentContainerStyle={{ flexGrow: 1 }}
+				refreshControl={
+					<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+				}
 			>
 				<View style={{ flexDirection: "row", zIndex: 0 }}>
 					<Lucide
@@ -408,6 +423,7 @@ const MyProfile = () => {
 								marginHorizontal: 20,
 								borderBottomWidth: 5,
 								borderRightWidth: 5,
+								width: "90%",
 							}}
 						>
 							<Text
@@ -518,62 +534,12 @@ const MyProfile = () => {
 							</Text>
 						</View>
 					</View>
-					<View
-						style={{
-							flexDirection: "row",
-							marginTop: 10,
-							alignItems: "flex-start",
-							backgroundColor: "#0a26b1ff",
-							borderRadius: 10,
-							gap: 10,
-						}}
-					>
-						<View
-							style={{
-								backgroundColor:
-									selectedVisibility === "public" ? "#2DD36F" : "#ffffff",
-								alignItems: "center",
-								padding: 5,
-								borderRadius: 10,
-								paddingHorizontal: 30,
-								borderWidth: 2,
-								borderRightWidth: 5,
-								borderBottomWidth: 5,
-							}}
-						>
-							<Text
-								style={{ fontFamily: "Montserrat-Bold", fontSize: 22 }}
-								onPress={() => setSelectedVisibility("public")}
-							>
-								Public
-							</Text>
-						</View>
 
-						<View
-							style={{
-								backgroundColor:
-									selectedVisibility === "private" ? "#f76db0" : "#ffffff",
-								alignItems: "center",
-								padding: 5,
-								borderRadius: 10,
-								paddingHorizontal: 30,
-								borderWidth: 2,
-								borderRightWidth: 5,
-								borderBottomWidth: 5,
-							}}
-						>
-							<Text
-								style={{ fontFamily: "Montserrat-Bold", fontSize: 22 }}
-								onPress={() => setSelectedVisibility("private")}
-							>
-								Private
-							</Text>
-						</View>
-					</View>
 					<View
 						style={{
 							flex: 1,
 							paddingHorizontal: 10,
+							width: "100%",
 						}}
 					>
 						<FlatList
@@ -614,6 +580,14 @@ const MyProfile = () => {
 					}}
 				></View>
 			</ScrollView>
+			<Profile
+				visible={showProfileActions}
+				onClose={() => {
+					setShowProfileActions(false);
+				}}
+				onProfileUpdated={refreshProfileData}
+				onLogout={logout}
+			/>
 		</>
 	);
 };
