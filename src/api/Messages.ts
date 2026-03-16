@@ -13,7 +13,7 @@ export type Message = {
 	sender_id: string;
 	content: string;
 	media_url: string | null;
-	media_type: string | null;
+	media_type: "image" | "video" | "audio" | null;
 	word_count: number;
 	sender: SpaceCreator;
 	likes: MessageLike[];
@@ -41,7 +41,7 @@ type SendMessagePayload = {
 		name?: string;
 		type?: string;
 	} | null;
-	media_type?: string;
+	media_type?: "image" | "video" | "audio";
 };
 
 const getMessages = async (

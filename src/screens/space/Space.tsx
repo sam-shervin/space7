@@ -1,16 +1,31 @@
-import FontAwesomeFreeSolid from "@react-native-vector-icons/fontawesome-free-solid";
-import { useEffect, useLayoutEffect, useState } from "react";
 import {
+	isErrorWithCode,
+	pick,
+	errorCodes as pickerErrorCodes,
+	types as pickerTypes,
+} from "@react-native-documents/picker";
+import FontAwesomeFreeSolid from "@react-native-vector-icons/fontawesome-free-solid";
+import {
+	useCallback,
+	useEffect,
+	useLayoutEffect,
+	useRef,
+	useState,
+} from "react";
+import {
+	BackHandler,
 	Image,
 	KeyboardAvoidingView,
 	Modal,
 	Platform,
+	RefreshControl,
 	ScrollView,
 	Text,
 	TextInput,
 	TouchableOpacity,
 	View,
 } from "react-native";
+import Video from "react-native-video";
 import {
 	deleteMessage,
 	getMessages,
@@ -19,9 +34,19 @@ import {
 	toggleMessageAppreciation,
 } from "../../api/Messages";
 import type { Space as SpaceType } from "../../api/Spaces";
-import { getSpaceById, joinSpace } from "../../api/Spaces";
+import { getSpaceById, joinSpace as joinSpaceApi } from "../../api/Spaces";
 import { useTopic } from "../../context/SpaceContext";
 import { useUser } from "../../context/UserContext";
+import {
+	connectSocket,
+	disconnectSocket,
+	joinSpace,
+	leaveSpace,
+	onMessageAppreciated,
+	onReceiveMessage,
+	sendMessage as sendSocketMessage,
+	setMessageAppreciated,
+} from "../../sockets/SocketInstance";
 
 const colors = [
 	"#FFD60A", // vivid yellow
@@ -40,27 +65,55 @@ export const Space = ({ topicId }: { topicId: string }) => {
 	const [messageError, setMessageError] = useState("");
 	const [sort, setSort] = useState<"recent" | "most_appreciated">("recent");
 	const [sending, setSending] = useState(false);
+	const [expandedImages, setExpandedImages] = useState<Record<string, boolean>>(
+		{},
+	);
+	const [selectedMedia, setSelectedMedia] = useState<{
+		uri: string;
+		name: string;
+		type: string;
+		mediaType: "image" | "video" | "audio" | null;
+	} | null>(null);
+	const [showAttachModal, setShowAttachModal] = useState(false);
+	const [pendingAttachType, setPendingAttachType] = useState<
+		"photo" | "video" | "audio" | null
+	>(null);
+	const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
+	const [audioProgress, setAudioProgress] = useState<Record<string, number>>(
+		{},
+	);
+	const [audioDuration, setAudioDuration] = useState<Record<string, number>>(
+		{},
+	);
+	const [audioEnded, setAudioEnded] = useState<Record<string, boolean>>({});
+	const audioRefs = useRef<
+		Record<string, { seek?: (seconds: number) => void } | null>
+	>({});
+	const [refreshing, setRefreshing] = useState(false);
 	const [showSortModal, setShowSortModal] = useState(false);
 	const [deleteMessageId, setDeleteMessageId] = useState<string | null>(null);
 	const { setTopicId } = useTopic();
 	const { user } = useUser();
 
-	useLayoutEffect(() => {
-		const fetchSpace = async () => {
-			try {
-				setIsLoading(true);
-				const space = await getSpaceById(topicId);
-				console.log(space);
-				setSpace(space);
-			} catch (error) {
-				console.error("Error fetching space:", error);
-			} finally {
-				setIsLoading(false);
-			}
-		};
+	const handleBack = useCallback(() => {
+		setTopicId(null);
+	}, [setTopicId]);
 
-		fetchSpace();
+	const loadSpace = useCallback(async () => {
+		try {
+			setIsLoading(true);
+			const data = await getSpaceById(topicId);
+			setSpace(data);
+		} catch (error) {
+			console.error("Error fetching space:", error);
+		} finally {
+			setIsLoading(false);
+		}
 	}, [topicId]);
+
+	useLayoutEffect(() => {
+		loadSpace();
+	}, [loadSpace]);
 
 	useEffect(() => {
 		const fetchMessagesList = async () => {
@@ -81,7 +134,7 @@ export const Space = ({ topicId }: { topicId: string }) => {
 		fetchMessagesList();
 	}, [topicId, sort]);
 
-	const refreshMessages = async () => {
+	const refreshMessages = useCallback(async () => {
 		try {
 			setMessagesLoading(true);
 			setMessageError("");
@@ -94,35 +147,141 @@ export const Space = ({ topicId }: { topicId: string }) => {
 		} finally {
 			setMessagesLoading(false);
 		}
-	};
+	}, [topicId, sort]);
+
+	useEffect(() => {
+		let unsubscribeReceive = () => {};
+		let unsubscribeAppreciation = () => {};
+
+		const setupSocket = async () => {
+			try {
+				await connectSocket();
+				joinSpace(topicId);
+
+				unsubscribeReceive = onReceiveMessage((payload) => {
+					if (
+						payload &&
+						typeof payload === "object" &&
+						"space_id" in payload &&
+						payload.space_id === topicId &&
+						"message" in payload
+					) {
+						const message = payload.message as Message;
+
+						setMessages((previous: Message[]) => [message, ...previous]);
+					}
+				});
+
+				unsubscribeAppreciation = onMessageAppreciated((payload) => {
+					if (payload.spaceId !== topicId) return;
+
+					setMessages((previous: Message[]) =>
+						previous.map((message) => {
+							if (message.message_id !== payload.messageId) return message;
+
+							return {
+								...message,
+								appreciation_count:
+									message.appreciation_count + (payload.appreciated ? 1 : -1),
+							};
+						}),
+					);
+				});
+			} catch (error) {
+				console.error("Socket setup failed:", error);
+			}
+		};
+
+		setupSocket();
+
+		return () => {
+			setPlayingAudioId(null);
+			audioRefs.current = {};
+			unsubscribeReceive();
+			unsubscribeAppreciation();
+			leaveSpace(topicId);
+			disconnectSocket();
+		};
+	}, [topicId]);
+
+	useEffect(() => {
+		const subscription = BackHandler.addEventListener(
+			"hardwareBackPress",
+			() => {
+				handleBack();
+				return true;
+			},
+		);
+
+		return () => subscription.remove();
+	}, [handleBack]);
 
 	const handleSendMessage = async () => {
-		if (!messageText.trim()) {
-			setMessageError("Type a message first");
+		if (!messageText.trim() && !selectedMedia) {
+			setMessageError("Type a message or attach media first");
 			return;
 		}
+
+		const messagePayload = {
+			content: messageText,
+			media: selectedMedia
+				? {
+						uri: selectedMedia.uri,
+						name: selectedMedia.name,
+						type: selectedMedia.type,
+					}
+				: null,
+			media_type: selectedMedia?.mediaType ?? undefined,
+		};
 
 		try {
 			setSending(true);
 			setMessageError("");
+			console.log("[Space] Sending message: joining space first", {
+				topicId,
+				hasText: Boolean(messageText.trim()),
+				hasMedia: Boolean(selectedMedia),
+			});
 
-			if (space?.visibility === "public") {
-				try {
-					await joinSpace(topicId);
-				} catch (joinError) {
-					const joinMessage =
-						joinError instanceof Error ? joinError.message.toLowerCase() : "";
+			try {
+				await joinSpaceApi(topicId);
+				console.log("[Space] joinSpace success", { topicId });
+			} catch (joinError) {
+				const joinMessage =
+					joinError instanceof Error ? joinError.message.toLowerCase() : "";
+				const alreadyPart =
+					joinMessage.includes("already a member") ||
+					joinMessage.includes("already part");
 
-					if (!joinMessage.includes("already a member")) {
-						throw joinError;
-					}
+				if (!alreadyPart) {
+					console.error("[Space] joinSpace failed", {
+						topicId,
+						joinMessage,
+						error: joinError,
+					});
+					throw joinError;
 				}
+
+				console.log("[Space] joinSpace skipped: already part", {
+					topicId,
+					joinMessage,
+				});
 			}
 
-			await sendMessage(topicId, { content: messageText });
+			const sentMessage: Message = await sendMessage(topicId, messagePayload);
+			console.log("[Space] sendMessage success", {
+				topicId,
+				messageId: sentMessage.message_id,
+			});
+			sendSocketMessage({
+				spaceId: topicId,
+				message: sentMessage,
+			});
 			setMessageText("");
-			await refreshMessages();
+			setSelectedMedia(null);
+			setMessages((previous) => [sentMessage, ...previous]);
 		} catch (error) {
+			console.error("[Space] send flow failed", { topicId, error });
 			setMessageError(
 				error instanceof Error ? error.message : "Failed to send message",
 			);
@@ -131,11 +290,165 @@ export const Space = ({ topicId }: { topicId: string }) => {
 		}
 	};
 
+	const toggleImageExpand = (messageId: string) => {
+		setExpandedImages((previous) => ({
+			...previous,
+			[messageId]: !previous[messageId],
+		}));
+	};
+
+	const formatAudioTime = (seconds: number) => {
+		if (!Number.isFinite(seconds) || seconds < 0) {
+			return "00:00";
+		}
+
+		const totalSeconds = Math.floor(seconds);
+		const mins = Math.floor(totalSeconds / 60)
+			.toString()
+			.padStart(2, "0");
+		const secs = (totalSeconds % 60).toString().padStart(2, "0");
+		return `${mins}:${secs}`;
+	};
+
+	const handlePickImageOrVideo = useCallback(
+		async (pickerType: "photo" | "video") => {
+			try {
+				setMessageError("");
+
+				const [file] = await pick({
+					type:
+						pickerType === "photo" ? [pickerTypes.images] : [pickerTypes.video],
+					allowMultiSelection: false,
+				});
+
+				if (!file?.uri) {
+					setMessageError("Couldn't get media file");
+					return;
+				}
+
+				setSelectedMedia({
+					uri: file.uri,
+					name: file.name ?? `upload-${Date.now()}`,
+					type:
+						file.type ?? (pickerType === "photo" ? "image/jpeg" : "video/mp4"),
+					mediaType: pickerType === "photo" ? "image" : "video",
+				});
+			} catch (error) {
+				if (
+					isErrorWithCode(error) &&
+					error.code === pickerErrorCodes.OPERATION_CANCELED
+				) {
+					return;
+				}
+
+				setMessageError(
+					error instanceof Error ? error.message : "Failed to pick media",
+				);
+			}
+		},
+		[],
+	);
+
+	const handlePickAudio = useCallback(async () => {
+		try {
+			setMessageError("");
+
+			const [file] = await pick({
+				type: [pickerTypes.audio],
+				allowMultiSelection: false,
+			});
+
+			if (!file.uri) {
+				setMessageError("Couldn't get audio file");
+				return;
+			}
+
+			setSelectedMedia({
+				uri: file.uri,
+				name: file.name ?? `audio-${Date.now()}`,
+				type: file.type ?? "audio/mpeg",
+				mediaType: "audio",
+			});
+		} catch (error) {
+			if (
+				isErrorWithCode(error) &&
+				error.code === pickerErrorCodes.OPERATION_CANCELED
+			) {
+				return;
+			}
+
+			setMessageError(
+				error instanceof Error ? error.message : "Failed to pick audio",
+			);
+		}
+	}, []);
+
+	useEffect(() => {
+		if (showAttachModal || !pendingAttachType) {
+			return;
+		}
+
+		const timer = setTimeout(() => {
+			if (pendingAttachType === "audio") {
+				handlePickAudio();
+			} else {
+				handlePickImageOrVideo(pendingAttachType);
+			}
+			setPendingAttachType(null);
+		}, 220);
+
+		return () => clearTimeout(timer);
+	}, [
+		showAttachModal,
+		pendingAttachType,
+		handlePickAudio,
+		handlePickImageOrVideo,
+	]);
+
+	const toggleAudioPlayback = (messageId: string) => {
+		if (playingAudioId === messageId) {
+			setPlayingAudioId(null);
+			return;
+		}
+
+		if (audioEnded[messageId]) {
+			audioRefs.current[messageId]?.seek?.(0);
+			setAudioProgress((previous) => ({
+				...previous,
+				[messageId]: 0,
+			}));
+			setAudioEnded((previous) => ({
+				...previous,
+				[messageId]: false,
+			}));
+		}
+
+		setPlayingAudioId(messageId);
+	};
+
 	const handleToggleAppreciation = async (messageId: string) => {
 		try {
 			setMessageError("");
-			await toggleMessageAppreciation(topicId, messageId);
-			await refreshMessages();
+			const result = await toggleMessageAppreciation(topicId, messageId);
+			if (user) {
+				setMessageAppreciated({
+					spaceId: topicId,
+					messageId,
+					appreciated: result.appreciated,
+					userId: user.user_id,
+				});
+			}
+			setMessages((previous) =>
+				previous.map((m) =>
+					m.message_id === messageId
+						? {
+								...m,
+								appreciation_count:
+									m.appreciation_count + (result.appreciated ? 1 : -1),
+							}
+						: m,
+				),
+			);
 		} catch (error) {
 			setMessageError(
 				error instanceof Error ? error.message : "Failed to appreciate message",
@@ -148,18 +461,131 @@ export const Space = ({ topicId }: { topicId: string }) => {
 			setMessageError("");
 			await deleteMessage(topicId, messageId);
 			setDeleteMessageId(null);
-			await refreshMessages();
+			setMessages((previous) =>
+				previous.filter((m) => m.message_id !== messageId),
+			);
 		} catch (error) {
 			setMessageError(
 				error instanceof Error ? error.message : "Failed to delete message",
 			);
 		}
 	};
+
+	const onRefresh = async () => {
+		setRefreshing(true);
+		await Promise.all([loadSpace(), refreshMessages()]);
+		setRefreshing(false);
+	};
+
 	return (
 		<KeyboardAvoidingView
 			style={{ flex: 1, backgroundColor: colors[4] }}
 			behavior={Platform.OS === "ios" ? "padding" : "height"}
 		>
+			<Modal
+				transparent
+				animationType="fade"
+				visible={showAttachModal}
+				onRequestClose={() => {
+					setPendingAttachType(null);
+					setShowAttachModal(false);
+				}}
+			>
+				<TouchableOpacity
+					activeOpacity={1}
+					onPress={() => {
+						setPendingAttachType(null);
+						setShowAttachModal(false);
+					}}
+					style={{
+						flex: 1,
+						backgroundColor: "rgba(0, 0, 0, 0.2)",
+						justifyContent: "flex-end",
+					}}
+				>
+					<View
+						style={{
+							backgroundColor: "white",
+							borderTopLeftRadius: 18,
+							borderTopRightRadius: 18,
+							padding: 14,
+							borderWidth: 2,
+							borderColor: "black",
+						}}
+					>
+						<Text
+							style={{
+								fontFamily: "Montserrat-ExtraBold",
+								fontSize: 18,
+								color: "black",
+								marginBottom: 10,
+							}}
+						>
+							Attach media
+						</Text>
+
+						<TouchableOpacity
+							onPress={() => {
+								setPendingAttachType("photo");
+								setShowAttachModal(false);
+							}}
+							style={{
+								borderWidth: 2,
+								borderColor: "black",
+								borderRadius: 12,
+								paddingVertical: 10,
+								paddingHorizontal: 12,
+								marginBottom: 8,
+								backgroundColor: "#E7F5FF",
+							}}
+						>
+							<Text style={{ fontFamily: "Montserrat-Bold", color: "black" }}>
+								Image
+							</Text>
+						</TouchableOpacity>
+
+						<TouchableOpacity
+							onPress={() => {
+								setPendingAttachType("video");
+								setShowAttachModal(false);
+							}}
+							style={{
+								borderWidth: 2,
+								borderColor: "black",
+								borderRadius: 12,
+								paddingVertical: 10,
+								paddingHorizontal: 12,
+								marginBottom: 8,
+								backgroundColor: "#FFF3BF",
+							}}
+						>
+							<Text style={{ fontFamily: "Montserrat-Bold", color: "black" }}>
+								Video
+							</Text>
+						</TouchableOpacity>
+
+						<TouchableOpacity
+							onPress={() => {
+								setPendingAttachType("audio");
+								setShowAttachModal(false);
+							}}
+							style={{
+								borderWidth: 2,
+								borderColor: "black",
+								borderRadius: 12,
+								paddingVertical: 10,
+								paddingHorizontal: 12,
+								backgroundColor: "#E6FCF5",
+							}}
+						>
+							<Text style={{ fontFamily: "Montserrat-Bold", color: "black" }}>
+								Audio
+							</Text>
+						</TouchableOpacity>
+					</View>
+				</TouchableOpacity>
+			</Modal>
+
 			<Modal
 				transparent
 				animationType="fade"
@@ -339,7 +765,7 @@ export const Space = ({ topicId }: { topicId: string }) => {
 						}}
 						name="arrow-left"
 						size={32}
-						onPress={() => setTopicId(null)}
+						onPress={handleBack}
 					/>
 
 					<Text
@@ -373,7 +799,13 @@ export const Space = ({ topicId }: { topicId: string }) => {
 					onPress={() => setShowSortModal(true)}
 				/>
 			</View>
-			<ScrollView contentContainerStyle={{ flexGrow: 1 }} style={{ flex: 1 }}>
+			<ScrollView
+				contentContainerStyle={{ flexGrow: 1 }}
+				style={{ flex: 1 }}
+				refreshControl={
+					<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+				}
+			>
 				<View style={{ padding: 10 }}>
 					{isLoading ? (
 						<Text
@@ -527,28 +959,190 @@ export const Space = ({ topicId }: { topicId: string }) => {
 									) : null}
 
 									{message.media_url && message.media_type === "image" ? (
-										<Image
-											style={{
-												width: "100%",
-												height: 180,
-												borderRadius: 12,
-												marginTop: 4,
-												marginBottom: 10,
-											}}
-											source={{ uri: message.media_url }}
-										/>
+										<TouchableOpacity
+											onPress={() => toggleImageExpand(message.message_id)}
+											activeOpacity={0.9}
+										>
+											<Image
+												style={{
+													width: "100%",
+													height: expandedImages[message.message_id]
+														? 320
+														: 180,
+													borderRadius: 12,
+													marginTop: 4,
+													marginBottom: 6,
+												}}
+												resizeMode={
+													expandedImages[message.message_id]
+														? "contain"
+														: "cover"
+												}
+												source={{ uri: message.media_url }}
+											/>
+											<Text
+												style={{
+													fontFamily: "Montserrat-Regular",
+													color: "#495057",
+													marginBottom: 10,
+												}}
+											>
+												{expandedImages[message.message_id]
+													? "Tap image to collapse"
+													: "Tap image to expand"}
+											</Text>
+										</TouchableOpacity>
 									) : null}
 
-									{message.media_url && message.media_type !== "image" ? (
-										<Text
+									{message.media_url && message.media_type === "video" ? (
+										<View
 											style={{
-												fontFamily: "Montserrat-Bold",
-												color: "#1C7ED6",
+												borderRadius: 12,
+												overflow: "hidden",
+												marginTop: 4,
 												marginBottom: 10,
+												backgroundColor: "black",
 											}}
 										>
-											Media attached: {message.media_type}
-										</Text>
+											<Video
+												source={{ uri: message.media_url }}
+												style={{ width: "100%", height: 220 }}
+												controls
+												resizeMode="cover"
+												paused
+											/>
+										</View>
+									) : null}
+
+									{message.media_url && message.media_type === "audio" ? (
+										<View
+											style={{
+												borderWidth: 2,
+												borderColor: "black",
+												borderRadius: 12,
+												padding: 8,
+												marginTop: 4,
+												marginBottom: 10,
+												backgroundColor: "#F8F9FA",
+											}}
+										>
+											<View
+												style={{
+													flexDirection: "row",
+													alignItems: "center",
+													marginBottom: 8,
+												}}
+											>
+												<TouchableOpacity
+													onPress={() =>
+														toggleAudioPlayback(message.message_id)
+													}
+													style={{
+														borderWidth: 2,
+														borderColor: "black",
+														borderRadius: 10,
+														paddingHorizontal: 10,
+														paddingVertical: 6,
+														backgroundColor: "#E7F5FF",
+														marginRight: 10,
+													}}
+												>
+													<Text
+														style={{
+															fontFamily: "Montserrat-Bold",
+															color: "black",
+														}}
+													>
+														{playingAudioId === message.message_id
+															? "Pause"
+															: "Play"}
+													</Text>
+												</TouchableOpacity>
+												<Text
+													style={{
+														fontFamily: "Montserrat-Bold",
+														color: "black",
+													}}
+												>
+													{formatAudioTime(
+														audioProgress[message.message_id] ?? 0,
+													)}{" "}
+													/{" "}
+													{formatAudioTime(
+														audioDuration[message.message_id] ?? 0,
+													)}
+												</Text>
+											</View>
+
+											<View
+												style={{
+													height: 8,
+													borderRadius: 999,
+													backgroundColor: "#DEE2E6",
+													overflow: "hidden",
+													marginBottom: 8,
+												}}
+											>
+												<View
+													style={{
+														height: 8,
+														width: `${Math.min(
+															100,
+															((audioProgress[message.message_id] ?? 0) /
+																Math.max(
+																	audioDuration[message.message_id] ?? 1,
+																	1,
+																)) *
+																100,
+														)}%`,
+														backgroundColor: "#339AF0",
+													}}
+												/>
+											</View>
+
+											<Video
+												ref={(reference) => {
+													audioRefs.current[message.message_id] = reference;
+												}}
+												source={{ uri: message.media_url }}
+												style={{ width: 1, height: 1, opacity: 0 }}
+												paused={playingAudioId !== message.message_id}
+												onLoad={(event) => {
+													setAudioDuration((previous) => ({
+														...previous,
+														[message.message_id]: event.duration,
+													}));
+													setAudioEnded((previous) => ({
+														...previous,
+														[message.message_id]: false,
+													}));
+												}}
+												onProgress={(event) => {
+													setAudioProgress((previous) => ({
+														...previous,
+														[message.message_id]: event.currentTime,
+													}));
+													setAudioEnded((previous) => ({
+														...previous,
+														[message.message_id]: false,
+													}));
+												}}
+												onEnd={() => {
+													setPlayingAudioId(null);
+													setAudioProgress((previous) => ({
+														...previous,
+														[message.message_id]:
+															audioDuration[message.message_id] ??
+															previous[message.message_id] ??
+															0,
+													}));
+													setAudioEnded((previous) => ({
+														...previous,
+														[message.message_id]: true,
+													}));
+												}}
+											/>
+										</View>
 									) : null}
 
 									<View style={{ flexDirection: "row", alignItems: "center" }}>
@@ -618,6 +1212,121 @@ export const Space = ({ topicId }: { topicId: string }) => {
 				</View>
 			</ScrollView>
 
+			{selectedMedia ? (
+				<View
+					style={{
+						backgroundColor: "white",
+						borderLeftWidth: 2,
+						borderRightWidth: 2,
+						borderTopWidth: 2,
+						borderColor: "black",
+						paddingHorizontal: 10,
+						paddingVertical: 8,
+					}}
+				>
+					<View
+						style={{
+							flexDirection: "row",
+							alignItems: "center",
+							columnGap: 10,
+						}}
+					>
+						{selectedMedia.mediaType === "image" ? (
+							<Image
+								source={{ uri: selectedMedia.uri }}
+								style={{
+									width: 44,
+									height: 44,
+									borderRadius: 8,
+									borderWidth: 1,
+								}}
+							/>
+						) : selectedMedia.mediaType === "video" ? (
+							<View
+								style={{
+									width: 96,
+									height: 64,
+									borderRadius: 8,
+									overflow: "hidden",
+									backgroundColor: "black",
+								}}
+							>
+								<Video
+									source={{ uri: selectedMedia.uri }}
+									style={{ width: "100%", height: "100%" }}
+									paused
+									resizeMode="cover"
+								/>
+							</View>
+						) : selectedMedia.mediaType === "audio" ? (
+							<View
+								style={{
+									width: 96,
+									height: 64,
+									borderRadius: 8,
+									borderWidth: 1,
+									alignItems: "center",
+									justifyContent: "center",
+									backgroundColor: "#F1F3F5",
+								}}
+							>
+								<Text style={{ color: "black", fontFamily: "Montserrat-Bold" }}>
+									AUDIO
+								</Text>
+							</View>
+						) : (
+							<View
+								style={{
+									width: 44,
+									height: 44,
+									borderRadius: 8,
+									borderWidth: 1,
+									alignItems: "center",
+									justifyContent: "center",
+									backgroundColor: "#F1F3F5",
+								}}
+							>
+								<Text style={{ color: "black", fontFamily: "Montserrat-Bold" }}>
+									{selectedMedia.mediaType === "video"
+										? "VID"
+										: selectedMedia.mediaType === "audio"
+											? "AUD"
+											: "FILE"}
+								</Text>
+							</View>
+						)}
+						<View style={{ flex: 1 }}>
+							<Text
+								numberOfLines={1}
+								style={{ fontFamily: "Montserrat-Bold", color: "black" }}
+							>
+								{selectedMedia.name}
+							</Text>
+							<Text
+								style={{ fontFamily: "Montserrat-Regular", color: "black" }}
+							>
+								Attached {selectedMedia.mediaType ?? "media"}
+							</Text>
+						</View>
+						<TouchableOpacity
+							onPress={() => setSelectedMedia(null)}
+							style={{
+								borderWidth: 2,
+								borderColor: "black",
+								borderRadius: 10,
+								paddingHorizontal: 10,
+								paddingVertical: 6,
+								backgroundColor: "#FFE3E3",
+							}}
+						>
+							<Text style={{ fontFamily: "Montserrat-Bold", color: "black" }}>
+								Remove
+							</Text>
+						</TouchableOpacity>
+					</View>
+				</View>
+			) : null}
+
 			<View
 				style={{
 					flexDirection: "row",
@@ -630,6 +1339,23 @@ export const Space = ({ topicId }: { topicId: string }) => {
 					borderRightWidth: 2,
 				}}
 			>
+				<TouchableOpacity
+					onPress={() => setShowAttachModal(true)}
+					disabled={sending}
+					style={{
+						backgroundColor: sending ? "#F1F3F5" : "#E7F5FF",
+						paddingHorizontal: 12,
+						paddingVertical: 10,
+						borderRadius: 12,
+						borderWidth: 2,
+						borderColor: "black",
+						marginRight: 8,
+					}}
+				>
+					<Text style={{ fontFamily: "Montserrat-Bold", color: "black" }}>
+						Media
+					</Text>
+				</TouchableOpacity>
 				<TextInput
 					value={messageText}
 					onChangeText={setMessageText}
