@@ -6,8 +6,15 @@ import {
 	createStaticNavigation,
 	useLinkBuilder,
 } from "@react-navigation/native";
-import { useRef, useState } from "react";
-import { ActivityIndicator, Animated, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import {
+	ActivityIndicator,
+	Animated,
+	BackHandler,
+	KeyboardAvoidingView,
+	Platform,
+	View,
+} from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { AuthProvider, useAuth } from "./src/context/AuthContext";
 import { TopicContext } from "./src/context/SpaceContext";
@@ -143,6 +150,28 @@ function MyTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 		state.routes.map(() => new Animated.Value(0)),
 	).current;
 
+	useEffect(() => {
+		const subscription = BackHandler.addEventListener(
+			"hardwareBackPress",
+			() => {
+				const currentRoute = state.routes[state.index]?.name;
+
+				if (
+					currentRoute === "NewTopic" ||
+					currentRoute === "MyDiscussions" ||
+					currentRoute === "MyProfile"
+				) {
+					navigation.navigate("Home");
+					return true;
+				}
+
+				return false;
+			},
+		);
+
+		return () => subscription.remove();
+	}, [navigation, state.index, state.routes]);
+
 	return (
 		<View
 			style={{
@@ -249,24 +278,29 @@ const AppContent = () => {
 
 	return (
 		<SafeAreaView style={{ flex: 1, backgroundColor: "#1A1A1A" }}>
-			{isLoading || (isAuthenticated && isUserLoading) ? (
-				<View
-					style={{
-						flex: 1,
-						justifyContent: "center",
-						alignItems: "center",
-						backgroundColor: "white",
-					}}
-				>
-					<ActivityIndicator size="large" color="#0091ffff" />
-				</View>
-			) : !isAuthenticated ? (
-				<AuthScreen />
-			) : (
-				<TopicContext.Provider value={{ topicId, setTopicId }}>
-					{topicId ? <Space topicId={topicId} /> : <Navigation />}
-				</TopicContext.Provider>
-			)}
+			<KeyboardAvoidingView
+				style={{ flex: 1 }}
+				behavior={Platform.OS === "ios" ? "padding" : "height"}
+			>
+				{isLoading || (isAuthenticated && isUserLoading) ? (
+					<View
+						style={{
+							flex: 1,
+							justifyContent: "center",
+							alignItems: "center",
+							backgroundColor: "white",
+						}}
+					>
+						<ActivityIndicator size="large" color="#0091ffff" />
+					</View>
+				) : !isAuthenticated ? (
+					<AuthScreen />
+				) : (
+					<TopicContext.Provider value={{ topicId, setTopicId }}>
+						{topicId ? <Space topicId={topicId} /> : <Navigation />}
+					</TopicContext.Provider>
+				)}
+			</KeyboardAvoidingView>
 		</SafeAreaView>
 	);
 };
