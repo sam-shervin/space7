@@ -5,7 +5,7 @@
 	"scripts": {
 		"android": "react-native run-android",
 		"android:fresh": "sh -c 'react-native start --reset-cache & sleep 5 && react-native run-android'",
-		"android:clean": "cd android && ./gradlew clean && cd .. && react-native run-android",
+		"android:clean": "rm -rf android/app/.cxx android/app/build/generated/autolinking && cd android && ./gradlew clean -x externalNativeBuildCleanDebug -x externalNativeBuildCleanRelease && cd .. && react-native run-android",
 		"ios": "react-native run-ios",
 		"dev": "react-native start",
 		"test": "jest",
@@ -14,6 +14,7 @@
 		"link": "npx react-native-asset"
 	},
 	"dependencies": {
+		"@react-native-documents/picker": "^12.0.1",
 		"@react-native-vector-icons/evil-icons": "^12.4.1",
 		"@react-native-vector-icons/fontawesome-free-solid": "^0.1.1",
 		"@react-native-vector-icons/lucide": "^12.4.1",
@@ -28,12 +29,15 @@
 		"react": "19.2.3",
 		"react-native": "0.84.1",
 		"react-native-gesture-handler": "^2.30.0",
+		"react-native-image-picker": "^8.2.1",
 		"react-native-keychain": "^10.0.0",
 		"react-native-reanimated": "^4.2.2",
 		"react-native-safe-area-context": "^5.7.0",
 		"react-native-screens": "^4.24.0",
 		"react-native-vector-icons": "^10.3.0",
-		"react-native-worklets": "^0.7.4"
+		"react-native-video": "^6.19.1",
+		"react-native-worklets": "^0.7.4",
+		"socket.io-client": "^4.8.3"
 	},
 	"devDependencies": {
 		"@babel/core": "^7.25.2",

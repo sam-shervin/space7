@@ -1,5 +1,3 @@
-declare const process: {
-	env: {
-		SERVER_ENDPOINT?: string;
-	};
-};
+declare module "@env" {
+	export const SERVER_ENDPOINT: string;
+}

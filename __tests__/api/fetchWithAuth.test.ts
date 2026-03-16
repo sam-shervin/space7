@@ -45,7 +45,7 @@ describe("fetchWithAuth", () => {
 		await fetchWithAuth("https://api.example.com/data");
 
 		const [, options] = mockFetch.mock.calls[0];
-		expect(options.headers["Authorization"]).toBe("Bearer my-jwt-token");
+		expect(options.headers.Authorization).toBe("Bearer my-jwt-token");
 	});
 
 	it("does NOT attach Authorization header when no token", async () => {
@@ -55,7 +55,7 @@ describe("fetchWithAuth", () => {
 		await fetchWithAuth("https://api.example.com/data");
 
 		const [, options] = mockFetch.mock.calls[0];
-		expect(options.headers["Authorization"]).toBeUndefined();
+		expect(options.headers.Authorization).toBeUndefined();
 	});
 
 	it("sets Content-Type to application/json by default (non-FormData)", async () => {
@@ -129,6 +129,6 @@ describe("fetchWithAuth", () => {
 
 		const [, options] = mockFetch.mock.calls[0];
 		expect(options.headers["X-Custom"]).toBe("yes");
-		expect(options.headers["Authorization"]).toBe("Bearer abc");
+		expect(options.headers.Authorization).toBe("Bearer abc");
 	});
 });
