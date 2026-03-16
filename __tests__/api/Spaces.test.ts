@@ -44,7 +44,6 @@ const sampleSpace: Space = {
 	space_id: "space-1",
 	title: "Test Space",
 	description: "A test space",
-	visibility: "public",
 	creator: { user_id: "user-1", username: "alice", profile_picture: "" },
 	participant_count: 5,
 	tags: [{ tag_id: 1, tag_name: "tech" }],
@@ -142,15 +141,6 @@ describe("getMySpaces", () => {
 		expect(result).toEqual([sampleSpace]);
 	});
 
-	it("appends visibility filter when provided", async () => {
-		mockFetchWithAuth.mockResolvedValueOnce(makeOkResponse([]));
-
-		await getMySpaces({ visibility: "private" });
-
-		const [url] = mockFetchWithAuth.mock.calls[0];
-		expect(url).toContain("visibility=private");
-	});
-
 	it("throws on error response", async () => {
 		mockFetchWithAuth.mockResolvedValueOnce(
 			makeErrorResponse({ error: "Failed to fetch my spaces" }, 500),
@@ -169,7 +159,6 @@ describe("createSpace", () => {
 		const result = await createSpace({
 			title: "Test Space",
 			description: "A test space",
-			visibility: "public",
 			hashtags: ["tech"],
 		});
 
@@ -179,7 +168,6 @@ describe("createSpace", () => {
 		expect(JSON.parse(options?.body as string)).toEqual({
 			title: "Test Space",
 			description: "A test space",
-			visibility: "public",
 			hashtags: ["tech"],
 		});
 		expect(result).toEqual(sampleSpace);
@@ -194,7 +182,6 @@ describe("createSpace", () => {
 			createSpace({
 				title: "Test Space",
 				description: "desc",
-				visibility: "public",
 				hashtags: [],
 			}),
 		).rejects.toThrow("Title already taken");
@@ -207,7 +194,6 @@ describe("createSpace", () => {
 			createSpace({
 				title: "Test Space",
 				description: "desc",
-				visibility: "public",
 				hashtags: [],
 			}),
 		).rejects.toThrow("Failed to create space");

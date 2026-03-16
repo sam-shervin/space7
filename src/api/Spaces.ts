@@ -16,7 +16,7 @@ export type Space = {
 	space_id: string;
 	title: string;
 	description: string;
-	visibility: "public" | "private";
+	visibility?: "public" | "private";
 	creator: SpaceCreator;
 	participant_count: number;
 	tags: SpaceTag[];
@@ -24,13 +24,13 @@ export type Space = {
 
 type GetSpacesOptions = {
 	limit?: number;
-	visibility?: Space["visibility"];
+	visibility?: "public" | "private";
 };
 
 type CreateSpacePayload = {
 	title: string;
 	description: string;
-	visibility: Space["visibility"];
+	visibility?: "public" | "private";
 	hashtags: string[];
 };
 
@@ -59,7 +59,10 @@ const buildQuery = (options: GetSpacesOptions = {}) => {
 const getTrendingSpaces = async (
 	options: GetSpacesOptions = {},
 ): Promise<Space[]> => {
-	const query = buildQuery({ limit: options.limit ?? 10 });
+	const query = buildQuery({
+		limit: options.limit ?? 10,
+		visibility: "public",
+	});
 
 	const res = await fetch(`${API}/api/spaces/trending${query}`, {
 		method: "GET",
@@ -73,14 +76,20 @@ const getTrendingSpaces = async (
 	if (!res.ok) {
 		throw new Error(data.error || "Failed to fetch trending spaces");
 	}
+	console.log("Trending spaces:", data);
 
-	return data;
+	return data.filter(
+		(space: Space) => !space.visibility || space.visibility === "public",
+	);
 };
 
 const getRecommendedSpaces = async (
 	options: GetSpacesOptions = {},
 ): Promise<Space[]> => {
-	const query = buildQuery({ limit: options.limit ?? 10 });
+	const query = buildQuery({
+		limit: options.limit ?? 10,
+		visibility: "public",
+	});
 
 	const res = await fetchWithAuth(`${API}/api/spaces/recommended${query}`, {
 		method: "GET",
@@ -95,13 +104,13 @@ const getRecommendedSpaces = async (
 		throw new Error(data.error || "Failed to fetch recommended spaces");
 	}
 
-	return data;
+	return data.filter(
+		(space: Space) => !space.visibility || space.visibility === "public",
+	);
 };
 
-const getMySpaces = async (
-	options: GetSpacesOptions = {},
-): Promise<Space[]> => {
-	const query = buildQuery({ visibility: options.visibility });
+const getMySpaces = async (): Promise<Space[]> => {
+	const query = buildQuery({});
 
 	const res = await fetchWithAuth(`${API}/api/spaces/my${query}`, {
 		method: "GET",
