@@ -1,8 +1,9 @@
 import { FontAwesomeFreeSolid } from "@react-native-vector-icons/fontawesome-free-solid";
 import shuffle from "lodash.shuffle";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
 	FlatList,
+	RefreshControl,
 	ScrollView,
 	StyleSheet,
 	Text,
@@ -17,6 +18,8 @@ import {
 } from "../../api/Spaces";
 import { useTopic } from "../../context/SpaceContext";
 import type { TopicItem } from "../../types/types";
+import NotificationsScreen from "../notifications/NotificationsScreen";
+import { SearchScreen } from "./SearchScreen";
 
 const styles = StyleSheet.create({
 	headerBackground: {
@@ -230,47 +233,70 @@ const Home = () => {
 	const [isRecommendedLoading, setIsRecommendedLoading] = useState(true);
 	const [trendingError, setTrendingError] = useState<string | null>(null);
 	const [recommendedError, setRecommendedError] = useState<string | null>(null);
-
+	const [searchQuery, setSearchQuery] = useState("");
+	const [refreshing, setRefreshing] = useState(false);
+	const [showNotifications, setShowNotifications] = useState(false);
 	const { setTopicId } = useTopic();
 
-	useEffect(() => {
-		const loadSpaces = async () => {
-			try {
-				setIsTrendingLoading(true);
-				setTrendingError(null);
-				setIsRecommendedLoading(true);
-				setRecommendedError(null);
+	const loadSpaces = useCallback(async () => {
+		try {
+			setIsTrendingLoading(true);
+			setTrendingError(null);
+			setIsRecommendedLoading(true);
+			setRecommendedError(null);
 
-				const trendingSpaces = await getTrendingSpaces();
-				setTrendingTopics(trendingSpaces.map(mapSpaceToTopicItem));
+			const trendingSpaces = await getTrendingSpaces();
+			setTrendingTopics(trendingSpaces.map(mapSpaceToTopicItem));
 
-				const recommendedSpaces = await getRecommendedSpaces();
-				setRecommendedTopics(recommendedSpaces.map(mapSpaceToTopicItem));
-			} catch (error) {
-				setTrendingError(
-					error instanceof Error
-						? error.message
-						: "Failed to load trending spaces",
-				);
-				setRecommendedError(
-					error instanceof Error
-						? error.message
-						: "Failed to load recommended spaces",
-				);
-			} finally {
-				setIsTrendingLoading(false);
-				setIsRecommendedLoading(false);
-			}
-		};
-
-		loadSpaces();
+			const recommendedSpaces = await getRecommendedSpaces();
+			setRecommendedTopics(recommendedSpaces.map(mapSpaceToTopicItem));
+		} catch (error) {
+			setTrendingError(
+				error instanceof Error
+					? error.message
+					: "Failed to load trending spaces",
+			);
+			setRecommendedError(
+				error instanceof Error
+					? error.message
+					: "Failed to load recommended spaces",
+			);
+		} finally {
+			setIsTrendingLoading(false);
+			setIsRecommendedLoading(false);
+		}
 	}, []);
+
+	useEffect(() => {
+		loadSpaces();
+	}, [loadSpaces]);
+
+	const onRefresh = async () => {
+		setRefreshing(true);
+		await loadSpaces();
+		setRefreshing(false);
+	};
+
+	const openNotifications = () => {
+		setShowNotifications(true);
+	};
+
+	const closeNotifications = () => {
+		setShowNotifications(false);
+	};
+
+	if (showNotifications) {
+		return <NotificationsScreen onClose={closeNotifications} />;
+	}
 
 	return (
 		<ScrollView
 			showsVerticalScrollIndicator={false}
 			showsHorizontalScrollIndicator={false}
 			style={{ flex: 1 }}
+			refreshControl={
+				<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+			}
 		>
 			<View style={styles.headerBackground}>
 				{/*Header*/}
@@ -278,36 +304,23 @@ const Home = () => {
 					<Text style={styles.logoText}>
 						space<Text style={{ color: "yellow" }}>7</Text>
 					</Text>
-					<FontAwesomeFreeSolid
-						style={{
-							padding: 5,
-							backgroundColor: "#FDD827",
-							borderRadius: 8,
-							borderWidth: 3,
-							borderColor: "black",
-							marginHorizontal: 5,
-							paddingHorizontal: 10,
-							alignSelf: "center",
-						}}
-						name="bell"
-						size={25}
-						color="#000000"
-					/>
-					<FontAwesomeFreeSolid
-						style={{
-							padding: 5,
-							backgroundColor: "#FB3498",
-							borderRadius: 8,
-							borderWidth: 3,
-							borderColor: "black",
-							marginLeft: 5,
-							paddingHorizontal: 10,
-							alignSelf: "center",
-						}}
-						name="bars"
-						size={25}
-						color="#000000"
-					/>
+					<TouchableOpacity activeOpacity={1} onPress={openNotifications}>
+						<FontAwesomeFreeSolid
+							style={{
+								padding: 5,
+								backgroundColor: "#FDD827",
+								borderRadius: 8,
+								borderWidth: 3,
+								borderColor: "black",
+								marginHorizontal: 5,
+								paddingHorizontal: 10,
+								alignSelf: "center",
+							}}
+							name="bell"
+							size={25}
+							color="#000000"
+						/>
+					</TouchableOpacity>
 				</View>
 				{/*Search Bar*/}
 				<View style={[styles.searchBar, focused && styles.inputFocused]}>
@@ -328,6 +341,13 @@ const Home = () => {
 						placeholderTextColor="#7f7d7dff"
 						onFocus={() => setFocused(true)}
 						onBlur={() => setFocused(false)}
+						onChangeText={(text) => {
+							if (text.length > 0) {
+								setSearchQuery(text);
+							} else {
+								setSearchQuery("");
+							}
+						}}
 					/>
 					<View
 						style={[
@@ -357,82 +377,173 @@ const Home = () => {
 					</View>
 				</View>
 			</View>
-			<View
-				style={{ backgroundColor: "#F0F0F0", paddingHorizontal: 0, flex: 1 }}
-			>
+			{searchQuery ? (
+				<SearchScreen query={searchQuery} />
+			) : (
 				<View
-					style={{
-						flexDirection: "row",
-						paddingVertical: 10,
-						marginTop: 10,
-						paddingHorizontal: 15,
-					}}
+					style={{ backgroundColor: "#F0F0F0", paddingHorizontal: 0, flex: 1 }}
 				>
 					<View
 						style={{
-							paddingVertical: 3,
-							paddingHorizontal: 8,
-							backgroundColor: "#FB3498",
-							marginRight: "auto",
-							borderColor: "black",
-							borderWidth: 3,
-							borderRadius: 8,
+							flexDirection: "row",
+							paddingVertical: 10,
+							marginTop: 10,
+							paddingHorizontal: 15,
 						}}
 					>
-						<Text
+						<View
 							style={{
-								fontFamily: "Montserrat-Bold",
-								fontSize: 18,
-								color: "black",
+								paddingVertical: 3,
+								paddingHorizontal: 8,
+								backgroundColor: "#FB3498",
+								marginRight: "auto",
+								borderColor: "black",
+								borderWidth: 3,
+								borderRadius: 8,
 							}}
 						>
-							Trending Topics
-						</Text>
+							<Text
+								style={{
+									fontFamily: "Montserrat-Bold",
+									fontSize: 18,
+									color: "black",
+								}}
+							>
+								Trending Topics
+							</Text>
+						</View>
 					</View>
-				</View>
-				<View
-					style={{
-						borderColor: "black",
-						marginLeft: 5,
-					}}
-				>
-					{isTrendingLoading ? (
-						<Text
+					<View
+						style={{
+							borderColor: "black",
+							marginLeft: 5,
+						}}
+					>
+						{isTrendingLoading ? (
+							<Text
+								style={{
+									paddingHorizontal: 12,
+									paddingVertical: 16,
+									fontFamily: "Montserrat-Medium",
+									color: "black",
+								}}
+							>
+								Loading trending spaces...
+							</Text>
+						) : trendingError ? (
+							<Text
+								style={{
+									paddingHorizontal: 12,
+									paddingVertical: 16,
+									fontFamily: "Montserrat-Medium",
+									color: "#C2255C",
+								}}
+							>
+								{trendingError}
+							</Text>
+						) : (
+							<FlatList
+								data={trendingTopics}
+								horizontal
+								showsHorizontalScrollIndicator={false}
+								showsVerticalScrollIndicator={false}
+								renderItem={({ item, index }) => (
+									<Item
+										topicItems={item}
+										index={index}
+										onPress={() => setTopicId(item.id)}
+										placement="fixed"
+									/>
+								)}
+								keyExtractor={(item) => item.id}
+								ListEmptyComponent={
+									<Text
+										style={{
+											paddingHorizontal: 12,
+											paddingVertical: 16,
+											fontFamily: "Montserrat-Medium",
+											color: "black",
+										}}
+									>
+										No trending spaces yet.
+									</Text>
+								}
+							/>
+						)}
+					</View>
+					<View
+						style={{
+							flexDirection: "row",
+							paddingVertical: 10,
+							paddingHorizontal: 15,
+						}}
+					>
+						<View
 							style={{
-								paddingHorizontal: 12,
-								paddingVertical: 16,
-								fontFamily: "Montserrat-Medium",
-								color: "black",
+								paddingVertical: 3,
+								paddingHorizontal: 8,
+								backgroundColor: "#FDFDFB",
+								marginRight: "auto",
+								borderColor: "black",
+								borderWidth: 3,
+								borderRadius: 8,
 							}}
 						>
-							Loading trending spaces...
-						</Text>
-					) : trendingError ? (
-						<Text
-							style={{
-								paddingHorizontal: 12,
-								paddingVertical: 16,
-								fontFamily: "Montserrat-Medium",
-								color: "#C2255C",
-							}}
-						>
-							{trendingError}
-						</Text>
-					) : (
+							<Text
+								style={{
+									fontFamily: "Montserrat-Bold",
+									fontSize: 18,
+									color: "black",
+								}}
+							>
+								Recommended for you
+							</Text>
+						</View>
+					</View>
+					<View
+						style={{
+							flex: 1,
+						}}
+					>
+						{isRecommendedLoading && (
+							<Text
+								style={{
+									paddingHorizontal: 12,
+									paddingVertical: 16,
+									fontFamily: "Montserrat-Medium",
+									color: "black",
+								}}
+							>
+								Loading recommended spaces...
+							</Text>
+						)}
+						{recommendedError && (
+							<Text
+								style={{
+									paddingHorizontal: 12,
+									paddingVertical: 16,
+									fontFamily: "Montserrat-Medium",
+									color: "#C2255C",
+								}}
+							>
+								{recommendedError}
+							</Text>
+						)}
 						<FlatList
-							data={trendingTopics}
-							horizontal
+							style={{ marginBottom: 80 }}
 							showsHorizontalScrollIndicator={false}
 							showsVerticalScrollIndicator={false}
+							data={recommendedTopics}
 							renderItem={({ item, index }) => (
 								<Item
 									topicItems={item}
 									index={index}
 									onPress={() => setTopicId(item.id)}
-									placement="fixed"
+									placement="adaptive"
 								/>
 							)}
 							keyExtractor={(item) => item.id}
+							scrollEnabled={false}
 							ListEmptyComponent={
 								<Text
 									style={{
@@ -442,100 +553,13 @@ const Home = () => {
 										color: "black",
 									}}
 								>
-									No trending spaces yet.
+									No recommendations yet.
 								</Text>
 							}
 						/>
-					)}
-				</View>
-				<View
-					style={{
-						flexDirection: "row",
-						paddingVertical: 10,
-						paddingHorizontal: 15,
-					}}
-				>
-					<View
-						style={{
-							paddingVertical: 3,
-							paddingHorizontal: 8,
-							backgroundColor: "#FDFDFB",
-							marginRight: "auto",
-							borderColor: "black",
-							borderWidth: 3,
-							borderRadius: 8,
-						}}
-					>
-						<Text
-							style={{
-								fontFamily: "Montserrat-Bold",
-								fontSize: 18,
-								color: "black",
-							}}
-						>
-							Recommended for you
-						</Text>
 					</View>
 				</View>
-				<View
-					style={{
-						flex: 1,
-					}}
-				>
-					{isRecommendedLoading && (
-						<Text
-							style={{
-								paddingHorizontal: 12,
-								paddingVertical: 16,
-								fontFamily: "Montserrat-Medium",
-								color: "black",
-							}}
-						>
-							Loading recommended spaces...
-						</Text>
-					)}
-					{recommendedError && (
-						<Text
-							style={{
-								paddingHorizontal: 12,
-								paddingVertical: 16,
-								fontFamily: "Montserrat-Medium",
-								color: "#C2255C",
-							}}
-						>
-							{recommendedError}
-						</Text>
-					)}
-					<FlatList
-						style={{ marginBottom: 80 }}
-						showsHorizontalScrollIndicator={false}
-						showsVerticalScrollIndicator={false}
-						data={recommendedTopics}
-						renderItem={({ item, index }) => (
-							<Item
-								topicItems={item}
-								index={index}
-								onPress={() => setTopicId(item.id)}
-								placement="adaptive"
-							/>
-						)}
-						keyExtractor={(item) => item.id}
-						scrollEnabled={false}
-						ListEmptyComponent={
-							<Text
-								style={{
-									paddingHorizontal: 12,
-									paddingVertical: 16,
-									fontFamily: "Montserrat-Medium",
-									color: "black",
-								}}
-							>
-								No recommendations yet.
-							</Text>
-						}
-					/>
-				</View>
-			</View>
+			)}
 		</ScrollView>
 	);
 };
