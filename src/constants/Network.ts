@@ -1,1 +1,3 @@
-export const API = process.env.SERVER_ENDPOINT ?? "";
+import { SERVER_ENDPOINT } from "@env";
+
+export const API = SERVER_ENDPOINT ?? "";

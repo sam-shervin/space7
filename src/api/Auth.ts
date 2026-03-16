@@ -1,4 +1,4 @@
-const API = process.env.SERVER_ENDPOINT ?? "";
+import { API } from "../constants/Network";
 
 type LoginResponse = {
 	token: string;
