@@ -82,10 +82,10 @@ export {
 	disconnectSocket,
 	joinSpace,
 	leaveSpace,
+	onMessageAppreciated,
+	onReceiveMessage,
 	sendMessage,
 	setMessageAppreciated,
-	onReceiveMessage,
-	onMessageAppreciated,
 	socket,
 };
 

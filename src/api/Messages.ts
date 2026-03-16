@@ -155,4 +155,4 @@ const deleteMessage = async (
 	return data;
 };
 
-export { getMessages, sendMessage, toggleMessageAppreciation, deleteMessage };
+export { deleteMessage, getMessages, sendMessage, toggleMessageAppreciation };

@@ -166,10 +166,10 @@ const deleteAccount = async (): Promise<ProfileMessageResponse> => {
 };
 
 export {
-	getProfile,
-	updateUsername,
-	updateBio,
-	updateProfilePicture,
-	updatePassword,
 	deleteAccount,
+	getProfile,
+	updateBio,
+	updatePassword,
+	updateProfilePicture,
+	updateUsername,
 };

@@ -125,4 +125,4 @@ const resetPassword = async (
 	return data;
 };
 
-export { signup, verifyOTP, login, forgotPassword, resetPassword };
+export { forgotPassword, login, resetPassword, signup, verifyOTP };

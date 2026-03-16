@@ -185,10 +185,10 @@ const joinSpace = async (
 };
 
 export {
-	getTrendingSpaces,
-	getRecommendedSpaces,
-	getMySpaces,
 	createSpace,
+	getMySpaces,
+	getRecommendedSpaces,
 	getSpaceById,
+	getTrendingSpaces,
 	joinSpace,
 };
