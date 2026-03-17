@@ -56,6 +56,30 @@ const colors = [
 	"#2DD36F", // fresh green
 ];
 
+const normalizeAppreciationCount = (value: unknown): number => {
+	const parsed = typeof value === "number" ? value : Number(value);
+
+	return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const normalizeMessageCount = (message: Message): Message => ({
+	...message,
+	appreciation_count: normalizeAppreciationCount(message.appreciation_count),
+});
+
+const dedupeMessagesById = (messages: Message[]): Message[] => {
+	const seenMessageIds = new Set<string>();
+
+	return messages.filter((message) => {
+		if (!message.message_id || seenMessageIds.has(message.message_id)) {
+			return false;
+		}
+
+		seenMessageIds.add(message.message_id);
+		return true;
+	});
+};
+
 export const Space = ({ topicId }: { topicId: string }) => {
 	const [isLoading, setIsLoading] = useState(true);
 	const [space, setSpace] = useState<null | SpaceType>(null);
@@ -121,7 +145,9 @@ export const Space = ({ topicId }: { topicId: string }) => {
 				setMessagesLoading(true);
 				setMessageError("");
 				const data = await getMessages(topicId, { sort });
-				setMessages(data.messages);
+				setMessages(
+					dedupeMessagesById(data.messages.map(normalizeMessageCount)),
+				);
 			} catch (error) {
 				setMessageError(
 					error instanceof Error ? error.message : "Failed to fetch messages",
@@ -139,7 +165,7 @@ export const Space = ({ topicId }: { topicId: string }) => {
 			setMessagesLoading(true);
 			setMessageError("");
 			const data = await getMessages(topicId, { sort });
-			setMessages(data.messages);
+			setMessages(dedupeMessagesById(data.messages.map(normalizeMessageCount)));
 		} catch (error) {
 			setMessageError(
 				error instanceof Error ? error.message : "Failed to fetch messages",
@@ -159,30 +185,99 @@ export const Space = ({ topicId }: { topicId: string }) => {
 				joinSpace(topicId);
 
 				unsubscribeReceive = onReceiveMessage((payload) => {
-					if (
-						payload &&
-						typeof payload === "object" &&
-						"space_id" in payload &&
-						payload.space_id === topicId &&
-						"message" in payload
-					) {
-						const message = payload.message as Message;
-
-						setMessages((previous: Message[]) => [message, ...previous]);
+					if (!payload || typeof payload !== "object") {
+						return;
 					}
+
+					const payloadRecord = payload as Record<string, unknown>;
+					const payloadSpaceId =
+						typeof payloadRecord.space_id === "string"
+							? payloadRecord.space_id
+							: typeof payloadRecord.spaceId === "string"
+								? payloadRecord.spaceId
+								: undefined;
+
+					const rawMessage =
+						typeof payloadRecord.message === "object" && payloadRecord.message
+							? (payloadRecord.message as Record<string, unknown>)
+							: payloadRecord;
+
+					const messageId =
+						typeof rawMessage.message_id === "string"
+							? rawMessage.message_id
+							: undefined;
+					const messageSpaceId =
+						typeof rawMessage.space_id === "string"
+							? rawMessage.space_id
+							: payloadSpaceId;
+
+					if (!messageId || messageSpaceId !== topicId) {
+						return;
+					}
+
+					const incomingMessage = normalizeMessageCount(rawMessage as Message);
+
+					setMessages((previous: Message[]) => {
+						if (previous.some((message) => message.message_id === messageId)) {
+							return previous;
+						}
+
+						return [incomingMessage, ...previous];
+					});
 				});
 
 				unsubscribeAppreciation = onMessageAppreciated((payload) => {
-					if (payload.spaceId !== topicId) return;
+					if (!payload || typeof payload !== "object") {
+						return;
+					}
+
+					const payloadRecord = payload as Record<string, unknown>;
+					const appreciationSpaceId =
+						typeof payloadRecord.spaceId === "string"
+							? payloadRecord.spaceId
+							: typeof payloadRecord.space_id === "string"
+								? payloadRecord.space_id
+								: undefined;
+					const appreciationMessageId =
+						typeof payloadRecord.messageId === "string"
+							? payloadRecord.messageId
+							: typeof payloadRecord.message_id === "string"
+								? payloadRecord.message_id
+								: undefined;
+					const appreciationUserId =
+						typeof payloadRecord.userId === "string"
+							? payloadRecord.userId
+							: typeof payloadRecord.user_id === "string"
+								? payloadRecord.user_id
+								: undefined;
+					const appreciated =
+						typeof payloadRecord.appreciated === "boolean"
+							? payloadRecord.appreciated
+							: payloadRecord.appreciated === 1 ||
+								payloadRecord.appreciated === "1" ||
+								payloadRecord.appreciated === "true";
+
+					if (!appreciationSpaceId || appreciationSpaceId !== topicId) {
+						return;
+					}
+
+					if (!appreciationMessageId) {
+						return;
+					}
+
+					if (appreciationUserId && appreciationUserId === user?.user_id) {
+						return;
+					}
 
 					setMessages((previous: Message[]) =>
 						previous.map((message) => {
-							if (message.message_id !== payload.messageId) return message;
+							if (message.message_id !== appreciationMessageId) return message;
 
 							return {
 								...message,
 								appreciation_count:
-									message.appreciation_count + (payload.appreciated ? 1 : -1),
+									normalizeAppreciationCount(message.appreciation_count) +
+									(appreciated ? 1 : -1),
 							};
 						}),
 					);
@@ -202,7 +297,7 @@ export const Space = ({ topicId }: { topicId: string }) => {
 			leaveSpace(topicId);
 			disconnectSocket();
 		};
-	}, [topicId]);
+	}, [topicId, user?.user_id]);
 
 	useEffect(() => {
 		const subscription = BackHandler.addEventListener(
@@ -279,7 +374,9 @@ export const Space = ({ topicId }: { topicId: string }) => {
 			});
 			setMessageText("");
 			setSelectedMedia(null);
-			setMessages((previous) => [sentMessage, ...previous]);
+			setMessages((previous) =>
+				dedupeMessagesById([normalizeMessageCount(sentMessage), ...previous]),
+			);
 		} catch (error) {
 			console.error("[Space] send flow failed", { topicId, error });
 			setMessageError(
@@ -444,7 +541,8 @@ export const Space = ({ topicId }: { topicId: string }) => {
 						? {
 								...m,
 								appreciation_count:
-									m.appreciation_count + (result.appreciated ? 1 : -1),
+									normalizeAppreciationCount(m.appreciation_count) +
+									(result.appreciated ? 1 : -1),
 							}
 						: m,
 				),
@@ -1166,7 +1264,8 @@ export const Space = ({ topicId }: { topicId: string }) => {
 													color: "black",
 												}}
 											>
-												👍 {message.appreciation_count}
+												👍{" "}
+												{normalizeAppreciationCount(message.appreciation_count)}
 											</Text>
 										</TouchableOpacity>
 
